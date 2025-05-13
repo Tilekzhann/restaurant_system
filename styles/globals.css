@@ -171,7 +171,9 @@ header.header {
   color: #007bff;
   font-weight: bold;
 }
-
+.sidebar{
+  display: none;
+}
 .sidebar a:hover {
   text-decoration: underline;
 }
