@@ -1,18 +1,17 @@
-// app/menu/page.tsx
 "use client";
 
-import { useState, useEffect } from 'react';
-import { db } from '@/firebase/config';
+import { useState, useEffect } from "react";
+import { db } from "@/firebase/config";
 import {
   collection,
   addDoc,
-  getDocs,
   updateDoc,
   deleteDoc,
   doc,
-} from 'firebase/firestore';
-import { getAuth, onAuthStateChanged } from 'firebase/auth';
-import { getUserRole } from '@/lib/auth';
+  onSnapshot,
+} from "firebase/firestore";
+import { getAuth, onAuthStateChanged } from "firebase/auth";
+import { getUserRole } from "@/lib/auth";
 
 interface Dish {
   id: string;
@@ -26,10 +25,10 @@ interface Dish {
 export default function MenuPage() {
   const [role, setRole] = useState<"admin" | "cashier" | "kitchen" | null>(null);
   const [dishes, setDishes] = useState<Dish[]>([]);
-  const [name, setName] = useState<string>("");
-  const [description, setDescription] = useState<string>("");
-  const [price, setPrice] = useState<string>("");
-  const [category, setCategory] = useState<string>("");
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [price, setPrice] = useState("");
+  const [category, setCategory] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -40,20 +39,23 @@ export default function MenuPage() {
         setRole(r as "admin" | "cashier" | "kitchen");
       }
     });
-    loadDishes();
+
+    const unsub = onSnapshot(collection(db, "menu"), (snap) => {
+      const items = snap.docs.map((d) => ({
+        id: d.id,
+        ...(d.data() as Omit<Dish, "id">),
+      }));
+      setDishes(items);
+    });
+
+    return () => unsub();
   }, []);
 
-  const loadDishes = async () => {
-    const snap = await getDocs(collection(db, 'menu'));
-    const items = snap.docs.map(d => ({ id: d.id, ...(d.data() as Omit<Dish, 'id'>) }));
-    setDishes(items);
-  };
-
   const resetForm = () => {
-    setName('');
-    setDescription('');
-    setPrice('');
-    setCategory('');
+    setName("");
+    setDescription("");
+    setPrice("");
+    setCategory("");
     setEditingId(null);
   };
 
@@ -67,14 +69,13 @@ export default function MenuPage() {
     };
 
     if (editingId) {
-      await updateDoc(doc(db, 'menu', editingId), data);
-      alert('Блюдо обновлено');
+      await updateDoc(doc(db, "menu", editingId), data);
+      alert("Блюдо обновлено");
     } else {
-      await addDoc(collection(db, 'menu'), data);
-      alert('Блюдо добавлено');
+      await addDoc(collection(db, "menu"), data);
+      alert("Блюдо добавлено");
     }
     resetForm();
-    loadDishes();
   };
 
   const handleEdit = (dish: Dish) => {
@@ -86,10 +87,8 @@ export default function MenuPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (confirm('Удалить блюдо?')) {
-      await deleteDoc(doc(db, 'menu', id));
-      alert('Блюдо удалено');
-      loadDishes();
+    if (confirm("Удалить блюдо?")) {
+      await deleteDoc(doc(db, "menu", id));
     }
   };
 
@@ -99,7 +98,9 @@ export default function MenuPage() {
 
       {role === "admin" && (
         <div className="mb-6">
-          <h2 className="text-xl mb-2">{editingId ? 'Редактировать блюдо' : 'Добавить блюдо'}</h2>
+          <h2 className="text-xl mb-2">
+            {editingId ? "Редактировать блюдо" : "Добавить блюдо"}
+          </h2>
           <input
             type="text"
             placeholder="Название"
@@ -131,7 +132,7 @@ export default function MenuPage() {
             onClick={handleSubmit}
             className="px-4 py-2 bg-blue-500 text-white rounded"
           >
-            {editingId ? 'Обновить' : 'Добавить'}
+            {editingId ? "Обновить" : "Добавить"}
           </button>
           {editingId && (
             <button
@@ -148,17 +149,29 @@ export default function MenuPage() {
       {dishes.length === 0 ? (
         <p>Меню пусто.</p>
       ) : (
-        dishes.map(dish => (
+        dishes.map((dish) => (
           <div key={dish.id} className="border p-4 mb-2 rounded">
             <div className="flex justify-between items-center">
               <div>
                 <h3 className="font-bold">{dish.name}</h3>
-                <p>{dish.category} — {dish.price} KZT</p>
+                <p>
+                  {dish.category} — {dish.price} KZT
+                </p>
               </div>
               {role === "admin" && (
                 <div>
-                  <button onClick={() => handleEdit(dish)} className="text-yellow-600 mr-2">Ред.</button>
-                  <button onClick={() => handleDelete(dish.id)} className="text-red-600">Удал.</button>
+                  <button
+                    onClick={() => handleEdit(dish)}
+                    className="text-yellow-600 mr-2"
+                  >
+                    Ред.
+                  </button>
+                  <button
+                    onClick={() => handleDelete(dish.id)}
+                    className="text-red-600"
+                  >
+                    Удал.
+                  </button>
                 </div>
               )}
             </div>

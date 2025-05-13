@@ -224,3 +224,15 @@ header.header {
   padding: 6px 0;
   border-bottom: 1px solid #eee;
 }
+.flash {
+  animation: flashBg 0.5s ease-in-out;
+}
+
+@keyframes flashBg {
+  0% {
+    background-color: #d4edda;
+  }
+  100% {
+    background-color: transparent;
+  }
+}

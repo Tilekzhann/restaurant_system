@@ -1,13 +1,13 @@
-// app/admin/staff.tsx
+// app/admin/staff/page.tsx
 "use client";
 
 import { useEffect, useState } from "react";
 import {
   collection,
-  getDocs,
   addDoc,
   deleteDoc,
   doc,
+  onSnapshot,
 } from "firebase/firestore";
 import { db } from "@/firebase/config";
 
@@ -17,26 +17,25 @@ export default function StaffPage() {
   const [showForm, setShowForm] = useState(false);
 
   useEffect(() => {
-    fetchStaff();
+    const unsub = onSnapshot(collection(db, "staff"), (snapshot) => {
+      const data = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...(doc.data() as { name: string }),
+      }));
+      setStaff(data);
+    });
+    return () => unsub();
   }, []);
-
-  const fetchStaff = async () => {
-    const snapshot = await getDocs(collection(db, "staff"));
-    const data = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-    setStaff(data as { id: string; name: string }[]);
-  };
 
   const handleAdd = async () => {
     if (!newName.trim()) return;
     await addDoc(collection(db, "staff"), { name: newName });
     setNewName("");
     setShowForm(false);
-    fetchStaff();
   };
 
   const handleDelete = async (id: string) => {
     await deleteDoc(doc(db, "staff", id));
-    fetchStaff();
   };
 
   return (
