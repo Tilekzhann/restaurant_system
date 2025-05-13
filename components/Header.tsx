@@ -6,7 +6,7 @@ import { auth } from "@/firebase/config";
 import { onAuthStateChanged, signOut, User } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import "../styles/header.css";
+import "../styles/globals.css";
 
 export default function Header() {
   const [userEmail, setUserEmail] = useState<string | null>(null);

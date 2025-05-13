@@ -6,7 +6,7 @@ import Link from "next/link";
 import { auth } from "@/firebase/config";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { getUserRole } from "@/lib/auth";
-import "../styles/sidebar.css";
+import "../styles/globals.css";
 
 type Role = "admin" | "cashier" | "kitchen" | null;
 
