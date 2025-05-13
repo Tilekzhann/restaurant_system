@@ -62,3 +62,6 @@ ol {
 main {
   @apply p-4;
 }
+body {
+  background-color: pink;
+}
