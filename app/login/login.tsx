@@ -22,10 +22,14 @@ export default function LoginPage() {
       else if (role === "waiter") router.push("/waiter");
       else if (role === "kitchen") router.push("/kitchen");
       else alert("Роль не назначена");
-    } catch (err: any) {
-      alert(err.message);
-    }
-  };
+    } catch (err) {
+			if (err instanceof Error) {
+				alert(err.message);
+			} else {
+				alert("Неизвестная ошибка");
+			}
+		}
+	};
 
   return (
     <div className="flex flex-col items-center justify-center h-screen gap-4">
