@@ -23,13 +23,13 @@ export default function LoginPage() {
       else if (role === "kitchen") router.push("/kitchen");
       else alert("Роль не назначена");
     } catch (err) {
-			if (err instanceof Error) {
-				alert(err.message);
-			} else {
-				alert("Неизвестная ошибка");
-			}
-		}
-	};
+      if (err instanceof Error) {
+        alert(err.message);
+      } else {
+        alert("Неизвестная ошибка");
+      }
+    }
+  };
 
   return (
     <div className="flex flex-col items-center justify-center h-screen gap-4">
@@ -37,13 +37,13 @@ export default function LoginPage() {
         type="email"
         placeholder="Email"
         className="p-2 border"
-        onChange={(e) => setEmail(e.target.value)}
+        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
       />
       <input
         type="password"
         placeholder="Пароль"
         className="p-2 border"
-        onChange={(e) => setPassword(e.target.value)}
+        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
       />
       <button onClick={login} className="px-4 py-2 bg-blue-500 text-white">Войти</button>
     </div>
