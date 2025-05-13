@@ -30,16 +30,15 @@ export default function Header() {
   };
 
   return (
-    <header className="w-full bg-gray-800 text-white p-4 flex justify-between items-center">
-      <h1 className="text-lg font-semibold">Restaurant System</h1>
-      <div className="flex items-center space-x-4">
-        {userEmail && <span className="text-sm">Привет, {userEmail}</span>}
-        <button
-          onClick={handleLogout}
-          className="px-3 py-1 bg-red-500 hover:bg-red-600 rounded text-sm"
-        >
-          Выйти
-        </button>
+    <header className="header">
+      <div className="left">
+        <span>Привет, {userEmail}</span>
+      </div>
+      <div className="right">
+        <a href="/admin">Админ-панель</a>
+        <a href="/menu">Меню</a>
+        <a href="/stock">Склад</a>
+        <button onClick={handleLogout}>Выйти</button>
       </div>
     </header>
   );
