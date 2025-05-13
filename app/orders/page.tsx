@@ -235,10 +235,13 @@ export default function OrdersPage() {
           <input type="number" value={quantity} onChange={(e) => setQuantity(Number(e.target.value))} min={1} />
           <button onClick={handleAddItem}>Добавить блюдо</button>
           <ul>
-            {orderItems.map((item, idx) => (
-              <li key={idx}>{item.name} x{item.quantity} — {item.price * item.quantity}₸</li>
-            ))}
-          </ul>
+  {orderItems.map((item, idx) => (
+    <li key={idx} className="flex justify-between items-center">
+      {item.name} x{item.quantity} — {item.price * item.quantity}₸
+      <button onClick={() => handleRemoveItem(idx)}>❌</button>
+    </li>
+  ))}
+</ul>
           <div><strong>Итого: {getTotal()} ₸</strong></div>
           <button onClick={handleSubmit}>Сохранить заказ</button>
         </div>
