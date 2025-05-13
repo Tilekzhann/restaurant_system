@@ -41,6 +41,7 @@ interface StaffMember {
 }
 
 export default function OrdersPage() {
+  const [role, setRole] = useState<"admin" | "cashier" | "kitchen" | null>(null);
   const [orders, setOrders] = useState<Order[]>([]);
   const [menu, setMenu] = useState<MenuItem[]>([]);
   const [staff, setStaff] = useState<StaffMember[]>([]);
@@ -53,6 +54,16 @@ export default function OrdersPage() {
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
 
   useEffect(() => {
+    import("firebase/auth").then(({ getAuth, onAuthStateChanged }) => {
+      const auth = getAuth();
+      onAuthStateChanged(auth, async (user) => {
+        if (user) {
+          const { getUserRole } = await import("@/lib/auth");
+          const r = await getUserRole(user.uid);
+          setRole(r as "admin" | "cashier" | "kitchen");
+        }
+      });
+    });
     fetchData();
   }, []);
 
@@ -109,21 +120,36 @@ export default function OrdersPage() {
     fetchData();
   };
 
-  const renderOrder = (order: Order) => (
-    <li key={order.id} className="order-item">
-      <strong>Стол #{order.tableNumber}</strong> — {order.items.map(i => `${i.name} x${i.quantity}`).join(", ")}
-      {order.status === "new" && <button onClick={() => handleMarkReady(order.id)}>Готово</button>}
-      {order.status === "ready" && <button onClick={() => handleMarkPaid(order.id)}>Оплачено</button>}
-    </li>
-  );
+  const renderOrder = (order: Order) => {
+    const staffName = staff.find(s => s.id === order.staffId)?.name || "—";
+    const time = order.createdAt.toDate().toLocaleString();
+    const total = order.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
+    return (
+      <li key={order.id} className="order-item">
+        <div><strong>Стол #{order.tableNumber}</strong> — {order.items.map(i => `${i.name} x${i.quantity}`).join(", ")}</div>
+        <div>Сотрудник: {staffName}</div>
+        <div>Сумма: {total} ₸</div>
+        <div>Создан: {time}</div>
+        {role === "kitchen" && order.status === "new" && (
+          <button onClick={() => handleMarkReady(order.id)}>Готово</button>
+        )}
+        {role === "cashier" && order.status === "ready" && (
+          <button onClick={() => handleMarkPaid(order.id)}>Оплачено</button>
+        )}
+      </li>
+    );
+  };
 
   return (
     <div className="orders-wrapper">
       <h1>Заказы</h1>
 
-      <button onClick={() => setShowForm(!showForm)}>
-        {showForm ? "Скрыть форму" : "+ Добавить заказ"}
-      </button>
+      {(role === "cashier") && (
+        <button onClick={() => setShowForm(!showForm)}>
+          {showForm ? "Скрыть форму" : "+ Добавить заказ"}
+        </button>
+      )}
 
       {showForm && (
         <div className="order-form">
@@ -169,13 +195,13 @@ export default function OrdersPage() {
       )}
 
       <h2>Готовятся</h2>
-      <ul>{orders.filter(o => o.status === "new").map(renderOrder)}</ul>
+      <ul>{[...orders.filter(o => o.status === "new")].sort((a, b) => b.createdAt.seconds - a.createdAt.seconds).map(renderOrder)}</ul>
 
       <h2>Готовы</h2>
-      <ul>{orders.filter(o => o.status === "ready").map(renderOrder)}</ul>
+      <ul>{[...orders.filter(o => o.status === "ready")].sort((a, b) => b.createdAt.seconds - a.createdAt.seconds).map(renderOrder)}</ul>
 
       <h2>Архив</h2>
-      <ul>{orders.filter(o => o.status === "paid").map(renderOrder)}</ul>
+      <ul>{[...orders.filter(o => o.status === "paid")].sort((a, b) => b.createdAt.seconds - a.createdAt.seconds).map(renderOrder)}</ul>
     </div>
   );
 }
