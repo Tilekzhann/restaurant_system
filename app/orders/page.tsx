@@ -58,32 +58,37 @@ export default function OrdersPage() {
 
   // 🔔 Регистрация service worker и получение токена
   useEffect(() => {
-    if ("serviceWorker" in navigator) {
+    if (typeof window !== "undefined" && "serviceWorker" in navigator) {
       navigator.serviceWorker
         .register("/firebase-messaging-sw.js")
         .then((registration) => {
-          console.log("SW registered");
-
-          Notification.requestPermission().then((permission) => {
-            if (permission === "granted") {
-              getToken(messaging, {
-                vapidKey: "BDBoBvrgB82hODNhc7N-HltXErs6FPaq3AbMw5xHezEbTmfcuMAdfuzY16OXXqGi8YXUjoaPGugAqM2MYNhzsks", // 🔁 подставь свой VAPID ключ
-                serviceWorkerRegistration: registration,
-              }).then((token) => {
-                console.log("FCM токен:", token);
-              });
-            }
-          });
-        });
-
-        onMessage(messaging, (payload) => {
-            const { title, body } = payload.notification ?? {};
-            new Notification(title || "Уведомление", {
-              body: body || "У вас новое событие",
+          console.log("✅ Service Worker зарегистрирован");
+  
+          if ("Notification" in window) {
+            Notification.requestPermission().then((permission) => {
+              if (permission === "granted") {
+                getToken(messaging, {
+                  vapidKey: "BDBoBvrgB82hODNhc7N-HltXErs6FPaq3AbMw5xHezEbTmfcuMAdfuzY16OXXqGi8YXUjoaPGugAqM2MYNhzsks",
+                  serviceWorkerRegistration: registration,
+                }).then((token) => {
+                  console.log("🔐 FCM токен:", token);
+                  // можно отправить токен в Firestore
+                });
+              }
             });
-          });
+          }
+        });
+  
+      // Активные уведомления (в открытом окне)
+      onMessage(messaging, (payload) => {
+        const { title, body } = payload.notification ?? {};
+        if (title) {
+          new Notification(title, { body: body || "Уведомление" });
+        }
+      });
     }
   }, []);
+  
 
   useEffect(() => {
     import("firebase/auth").then(({ getAuth, onAuthStateChanged }) => {
