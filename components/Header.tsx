@@ -45,11 +45,12 @@ export default function Header() {
       <div className="header-toggle" onClick={() => setMenuOpen(!menuOpen)}>☰</div>
       <nav className={`header-nav ${menuOpen ? "open" : ""}`}>
         {role === "admin" && (
-      <>
-       <Link href="/admin">Админ-панель</Link>
-       <Link href="/admin/staff">Сотрудники</Link>
-      </>
-      )}
+          <>
+            <Link href="/admin">Админ-панель</Link>
+            <Link href="/admin/staff">Сотрудники</Link>
+          </>
+        )}
+        <Link href="/orders">Заказы</Link>
         <Link href="/menu">Меню</Link>
         <Link href="/stock">Склад</Link>
         <button onClick={handleLogout}>Выйти</button>
