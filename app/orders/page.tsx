@@ -26,7 +26,7 @@ interface Order {
   staffId: string;
   items: OrderItem[];
   status: "new" | "ready" | "paid";
-  createdAt: any;
+  createdAt: Timestamp;
 }
 
 interface MenuItem {
