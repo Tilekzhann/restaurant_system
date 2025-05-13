@@ -2,7 +2,6 @@
 import { useState, useEffect } from 'react';
 import { db } from '@/firebase/config';
 import { collection, getDocs } from 'firebase/firestore';
-import { useRouter } from 'next/navigation';
 
 // Определяем интерфейс для блюда
 interface Dish {
@@ -18,7 +17,6 @@ export default function CashierPage() {
   const [menuItems, setMenuItems] = useState<Dish[]>([]); // Типизируем menuItems как массив блюд
   const [order, setOrder] = useState<Dish[]>([]); // Типизируем order как массив блюд
   const [total, setTotal] = useState<number>(0); // Общая сумма заказа
-  const router = useRouter();
 
   // Загрузка всех блюд из Firestore
   const loadMenu = async () => {

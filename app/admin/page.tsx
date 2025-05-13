@@ -59,7 +59,7 @@ export default function AdminMenuPage() {
       alert('Блюдо добавлено');
       // Обновляем меню после добавления
       loadMenu();
-    } catch (err) {
+    } catch {
       alert('Ошибка при добавлении блюда');
     }
   };
@@ -80,7 +80,7 @@ export default function AdminMenuPage() {
       await deleteDoc(doc(db, 'menu', id));
       alert('Блюдо удалено');
       loadMenu();
-    } catch (err) {
+    } catch {
       alert('Ошибка при удалении блюда');
     }
   };
