@@ -10,10 +10,10 @@ import {
   query,
   orderBy,
   onSnapshot,
+  setDoc,
 } from "firebase/firestore";
 import { db } from "@/firebase/config";
-import { messaging } from "@/firebase/messaging"; // экспорт messaging здесь
-import { getToken, onMessage } from "firebase/messaging";
+import { getAuth, onAuthStateChanged } from "firebase/auth";
 
 interface OrderItem {
   name: string;
@@ -56,70 +56,62 @@ export default function OrdersPage() {
 
   const newOrderIds = useRef<Set<string>>(new Set());
 
-  // 🔔 Регистрация service worker и получение токена
+  // 🔐 Получение роли и push-токена
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      import("@/firebase/messaging").then(({ messaging }) => {
-        if ("serviceWorker" in navigator) {
-          navigator.serviceWorker
-            .register("/firebase-messaging-sw.js")
-            .then((registration) => {
-              console.log("SW registered");
-  
+    const auth = getAuth();
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        const { getUserRole } = await import("@/lib/auth");
+        const r = await getUserRole(user.uid);
+        setRole(r as "admin" | "cashier" | "kitchen");
+
+        if (typeof window !== "undefined") {
+          import("@/firebase/messaging").then(async ({ messaging }) => {
+            if ("serviceWorker" in navigator) {
+              const registration = await navigator.serviceWorker.register("/firebase-messaging-sw.js");
+
               if ("Notification" in window) {
-                Notification.requestPermission().then((permission) => {
-                  if (permission === "granted") {
-                    import("firebase/messaging").then(({ getToken, onMessage }) => {
-                      getToken(messaging, {
-                        vapidKey: "ТВОЙ_VAPID",
-                        serviceWorkerRegistration: registration,
-                      }).then((token) => {
-                        console.log("🔐 Token:", token);
-                        // сохранить token в Firestore при желании
-                      });
-  
-                      onMessage(messaging, (payload) => {
-                        const { title, body } = payload.notification ?? {};
-                        if (title) {
-                          new Notification(title, { body: body || "Уведомление" });
-                        }
-                      });
+                const permission = await Notification.requestPermission();
+                if (permission === "granted") {
+                  const { getToken, onMessage } = await import("firebase/messaging");
+                  const token = await getToken(messaging, {
+                    vapidKey: "BDBoBvrgB82hODNhc7N-HltXErs6FPaq3AbMw5xHezEbTmfcuMAdfuzY16OXXqGi8YXUjoaPGugAqM2MYNhzsks", // вставь свой VAPID
+                    serviceWorkerRegistration: registration,
+                  });
+
+                  if (token) {
+                    await setDoc(doc(db, "fcm_tokens", user.uid), {
+                      token,
+                      role: r,
+                      timestamp: Timestamp.now(),
                     });
                   }
-                });
+
+                  onMessage(messaging, (payload) => {
+                    const { title, body } = payload.notification ?? {};
+                    if (title) new Notification(title, { body: body || "" });
+                  });
+                }
               }
-            });
+            }
+          });
         }
-      });
-    }
-  }, []);
-  
-  
-
-  useEffect(() => {
-    import("firebase/auth").then(({ getAuth, onAuthStateChanged }) => {
-      const auth = getAuth();
-      onAuthStateChanged(auth, async (user) => {
-        if (user) {
-          const { getUserRole } = await import("@/lib/auth");
-          const r = await getUserRole(user.uid);
-          setRole(r as "admin" | "cashier" | "kitchen");
-        }
-      });
+      }
     });
+  }, []);
 
+  // Загрузка заказов, меню и сотрудников
+  useEffect(() => {
     const unsubOrders = onSnapshot(
       query(collection(db, "orders"), orderBy("createdAt", "desc")),
       (snapshot) => {
         const list: Order[] = [];
         snapshot.forEach((doc) => {
           const order = { id: doc.id, ...doc.data() } as Order;
-
           if (!newOrderIds.current.has(order.id)) {
             newOrderIds.current.add(order.id);
             setTimeout(() => newOrderIds.current.delete(order.id), 3000);
           }
-
           list.push(order);
         });
         setOrders(list);
@@ -160,6 +152,7 @@ export default function OrdersPage() {
 
   const handleSubmit = async () => {
     if (!selectedTable || !selectedStaff || orderItems.length === 0) return;
+
     await addDoc(collection(db, "orders"), {
       tableNumber: Number(selectedTable),
       staffId: selectedStaff,
@@ -167,6 +160,17 @@ export default function OrdersPage() {
       status: "new",
       createdAt: Timestamp.now(),
     });
+
+    await fetch("/api/sendPush", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title: "Новый заказ",
+        body: `Стол #${selectedTable} — ${orderItems.length} блюд`,
+        role: "kitchen",
+      }),
+    });
+
     setShowForm(false);
     setSelectedTable("");
     setSelectedStaff("");
@@ -191,10 +195,7 @@ export default function OrdersPage() {
         key={order.id}
         className={`order-item ${newOrderIds.current.has(order.id) ? "flash" : ""}`}
       >
-        <div>
-          <strong>Стол #{order.tableNumber}</strong> —{" "}
-          {order.items.map((i) => `${i.name} x${i.quantity}`).join(", ")}
-        </div>
+        <div><strong>Стол #{order.tableNumber}</strong> — {order.items.map(i => `${i.name} x${i.quantity}`).join(", ")}</div>
         <div>Сотрудник: {staffName}</div>
         <div>Сумма: {total} ₸</div>
         <div>Создан: {time}</div>
@@ -211,72 +212,43 @@ export default function OrdersPage() {
   return (
     <div className="orders-wrapper">
       <h1>Заказы</h1>
-
       {role === "cashier" && (
         <button onClick={() => setShowForm(!showForm)}>
           {showForm ? "Скрыть форму" : "+ Добавить заказ"}
         </button>
       )}
-
       {showForm && (
         <div className="order-form">
           <select value={selectedStaff} onChange={(e) => setSelectedStaff(e.target.value)}>
             <option value="">Выберите сотрудника</option>
             {staff.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name}
-              </option>
+              <option key={s.id} value={s.id}>{s.name}</option>
             ))}
           </select>
-
-          <input
-            type="number"
-            placeholder="Номер стола"
-            value={selectedTable}
-            onChange={(e) => setSelectedTable(e.target.value)}
-          />
-
+          <input type="number" placeholder="Номер стола" value={selectedTable} onChange={(e) => setSelectedTable(e.target.value)} />
           <select value={selectedItem} onChange={(e) => setSelectedItem(e.target.value)}>
             <option value="">Выберите блюдо</option>
             {menu.map((m) => (
-              <option key={m.id} value={m.id}>
-                {m.name} — {m.price}₸
-              </option>
+              <option key={m.id} value={m.id}>{m.name} — {m.price}₸</option>
             ))}
           </select>
-
-          <input
-            type="number"
-            value={quantity}
-            onChange={(e) => setQuantity(Number(e.target.value))}
-            min={1}
-          />
-
+          <input type="number" value={quantity} onChange={(e) => setQuantity(Number(e.target.value))} min={1} />
           <button onClick={handleAddItem}>Добавить блюдо</button>
-
           <ul>
             {orderItems.map((item, idx) => (
-              <li key={idx} className="flex justify-between items-center">
-                {item.name} x{item.quantity} — {item.price * item.quantity}₸
-                <button onClick={() => handleRemoveItem(idx)}>❌</button>
-              </li>
+              <li key={idx}>{item.name} x{item.quantity} — {item.price * item.quantity}₸</li>
             ))}
           </ul>
-
           <div><strong>Итого: {getTotal()} ₸</strong></div>
-
           <button onClick={handleSubmit}>Сохранить заказ</button>
         </div>
       )}
-
       <h2>Готовятся</h2>
-      <ul>{orders.filter((o) => o.status === "new").map(renderOrder)}</ul>
-
+      <ul>{orders.filter(o => o.status === "new").map(renderOrder)}</ul>
       <h2>Готовы</h2>
-      <ul>{orders.filter((o) => o.status === "ready").map(renderOrder)}</ul>
-
+      <ul>{orders.filter(o => o.status === "ready").map(renderOrder)}</ul>
       <h2>Архив</h2>
-      <ul>{orders.filter((o) => o.status === "paid").map(renderOrder)}</ul>
+      <ul>{orders.filter(o => o.status === "paid").map(renderOrder)}</ul>
     </div>
   );
 }
