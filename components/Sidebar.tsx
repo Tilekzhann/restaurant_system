@@ -6,6 +6,7 @@ import Link from "next/link";
 import { auth } from "@/firebase/config";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { getUserRole } from "@/lib/auth";
+import "../styles/sidebar.css";
 
 type Role = "admin" | "cashier" | "kitchen" | null;
 
@@ -24,67 +25,30 @@ export default function Sidebar() {
     return () => unsub();
   }, []);
 
-  if (!role) {
-    return null;
-  }
+  if (!role) return null;
 
   return (
-    <aside className="w-48 bg-gray-100 h-screen p-4">
-      <nav className="flex flex-col space-y-2">
+    <aside className="sidebar">
+      <nav>
         {role === "admin" && (
           <>
-            <Link
-              href="/admin"
-              className="px-2 py-1 rounded hover:bg-gray-200"
-            >
-              Админ-панель
-            </Link>
-            <Link
-              href="/menu"
-              className="px-2 py-1 rounded hover:bg-gray-200"
-            >
-              Меню
-            </Link>
-            <Link
-              href="/stock"
-              className="px-2 py-1 rounded hover:bg-gray-200"
-            >
-              Склад
-            </Link>
+            <Link href="/admin">Админ-панель</Link>
+            <Link href="/menu">Меню</Link>
+            <Link href="/stock">Склад</Link>
           </>
         )}
 
         {role === "cashier" && (
           <>
-            <Link
-              href="/cashier"
-              className="px-2 py-1 rounded hover:bg-gray-200"
-            >
-              Касса
-            </Link>
-            <Link
-              href="/stock"
-              className="px-2 py-1 rounded hover:bg-gray-200"
-            >
-              Склад
-            </Link>
+            <Link href="/cashier">Касса</Link>
+            <Link href="/stock">Склад</Link>
           </>
         )}
 
         {role === "kitchen" && (
           <>
-            <Link
-              href="/kitchen"
-              className="px-2 py-1 rounded hover:bg-gray-200"
-            >
-              Заказы
-            </Link>
-            <Link
-              href="/stock"
-              className="px-2 py-1 rounded hover:bg-gray-200"
-            >
-              Склад
-            </Link>
+            <Link href="/kitchen">Заказы</Link>
+            <Link href="/stock">Склад</Link>
           </>
         )}
       </nav>
