@@ -1,13 +1,12 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import * as admin from "firebase-admin";
-import path from "path";
 import { getApps } from "firebase-admin/app";
+import serviceAccount from "@/firebase/serviceAccountKey.json"; // ✅ импорт как ES-модуль
 
 // Инициализация, если ещё не было
 if (!getApps().length) {
-  const serviceAccount = require(path.resolve("./firebase/serviceAccountKey.json"));
   admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount),
+    credential: admin.credential.cert(serviceAccount as admin.ServiceAccount),
   });
 }
 
@@ -33,7 +32,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       tokens,
     };
 
-    // ✅ Ждём ответ и используем response
     const response = await admin.messaging().sendEachForMulticast(message);
 
     return res.status(200).json({ success: true, response });
