@@ -19,7 +19,6 @@ export default function LoginPage() {
 
       if (role === "admin") router.push("/admin");
       else if (role === "cashier") router.push("/cashier");
-      else if (role === "waiter") router.push("/waiter");
       else if (role === "kitchen") router.push("/kitchen");
       else alert("Роль не назначена");
     } catch (err) {
@@ -45,7 +44,9 @@ export default function LoginPage() {
         className="p-2 border"
         onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
       />
-      <button onClick={login} className="px-4 py-2 bg-blue-500 text-white">Войти</button>
+      <button onClick={login} className="px-4 py-2 bg-blue-500 text-white">
+        Войти
+      </button>
     </div>
   );
 }

@@ -1,0 +1,65 @@
+/* globals.css */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ——————————————————————————————
+   Custom global styles
+   —————————————————————————————— */
+
+/* Сброс отступов и рамок по умолчанию */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* Базовые стили для <html> и <body> */
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  @apply bg-gray-50 text-gray-900 font-sans leading-relaxed;
+}
+
+/* Ссылки */
+a {
+  @apply text-blue-500 hover:text-blue-700 underline;
+}
+
+/* Списки */
+ul,
+ol {
+  @apply list-inside;
+}
+
+/* Заголовки */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  @apply font-semibold;
+}
+
+/* Кнопки без дефолтного фокуса */
+button:focus {
+  outline: none;
+}
+
+/* Формы */
+input,
+textarea,
+button,
+select {
+  @apply font-sans;
+}
+
+/* Горизонтальный скроллбар для основного контента */
+main {
+  @apply overflow-auto;
+}
