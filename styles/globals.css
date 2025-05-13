@@ -1,67 +1,41 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/* styles/globals.css */
 
-/* ----------------------------------------
-   Custom global styles
----------------------------------------- */
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
+* {
   margin: 0;
   padding: 0;
-}
-
-html {
-  scroll-behavior: smooth;
+  box-sizing: border-box;
 }
 
 body {
-  @apply bg-gradient-to-r from-green-100 to-blue-200 text-gray-900 font-sans leading-relaxed min-h-screen;
+  font-family: Arial, sans-serif;
+  background-color: #f4f4f4;
+  color: #222;
+  padding: 1rem;
 }
 
-a {
-  @apply text-blue-600 hover:text-blue-800 underline;
-}
-
-h1 {
-  @apply text-3xl font-bold mb-4;
-}
-
-h2 {
-  @apply text-2xl font-semibold mb-3;
-}
-
-h3 {
-  @apply text-xl font-medium mb-2;
-}
-
-input,
-textarea,
-select,
-button {
-  @apply border border-gray-300 rounded px-3 py-2 mb-2;
+h1, h2, h3 {
+  margin-bottom: 1rem;
+  font-weight: bold;
 }
 
 button {
-  @apply bg-gray-100 hover:bg-gray-200 transition-colors;
+  background-color: #007bff;
+  color: #fff;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-top: 10px;
 }
 
-input:focus,
-textarea:focus,
-select:focus {
-  @apply outline-none ring-2 ring-blue-400;
+button:hover {
+  background-color: #0056b3;
 }
 
-ul,
-ol {
-  @apply list-disc list-inside;
-}
-
-main {
-  @apply p-4;
-}
-body {
-  background-color: pink;
+input, textarea {
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  margin-bottom: 1rem;
+  width: 100%;
 }
