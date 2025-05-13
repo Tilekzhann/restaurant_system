@@ -12,6 +12,8 @@ import {
   onSnapshot,
 } from "firebase/firestore";
 import { db } from "@/firebase/config";
+import { messaging } from "@/firebase/messaging"; // экспорт messaging здесь
+import { getToken, onMessage } from "firebase/messaging";
 
 interface OrderItem {
   name: string;
@@ -20,15 +22,13 @@ interface OrderItem {
 }
 
 interface Order {
-    id: string;
-    tableNumber: number;
-    staffId: string;
-    items: OrderItem[];
-    status: "new" | "ready" | "paid";
-    createdAt: Timestamp;
-    new?: boolean; // 👈 добавляем это
-  }
-  
+  id: string;
+  tableNumber: number;
+  staffId: string;
+  items: OrderItem[];
+  status: "new" | "ready" | "paid";
+  createdAt: Timestamp;
+}
 
 interface MenuItem {
   id: string;
@@ -56,6 +56,35 @@ export default function OrdersPage() {
 
   const newOrderIds = useRef<Set<string>>(new Set());
 
+  // 🔔 Регистрация service worker и получение токена
+  useEffect(() => {
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker
+        .register("/firebase-messaging-sw.js")
+        .then((registration) => {
+          console.log("SW registered");
+
+          Notification.requestPermission().then((permission) => {
+            if (permission === "granted") {
+              getToken(messaging, {
+                vapidKey: "BDBoBvrgB82hODNhc7N-HltXErs6FPaq3AbMw5xHezEbTmfcuMAdfuzY16OXXqGi8YXUjoaPGugAqM2MYNhzsks", // 🔁 подставь свой VAPID ключ
+                serviceWorkerRegistration: registration,
+              }).then((token) => {
+                console.log("FCM токен:", token);
+              });
+            }
+          });
+        });
+
+        onMessage(messaging, (payload) => {
+            const { title, body } = payload.notification ?? {};
+            new Notification(title || "Уведомление", {
+              body: body || "У вас новое событие",
+            });
+          });
+    }
+  }, []);
+
   useEffect(() => {
     import("firebase/auth").then(({ getAuth, onAuthStateChanged }) => {
       const auth = getAuth();
@@ -74,13 +103,12 @@ export default function OrdersPage() {
         const list: Order[] = [];
         snapshot.forEach((doc) => {
           const order = { id: doc.id, ...doc.data() } as Order;
+
           if (!newOrderIds.current.has(order.id)) {
             newOrderIds.current.add(order.id);
-            order.new = true;
-            setTimeout(() => {
-              newOrderIds.current.delete(order.id);
-            }, 3000);
+            setTimeout(() => newOrderIds.current.delete(order.id), 3000);
           }
+
           list.push(order);
         });
         setOrders(list);
@@ -224,9 +252,7 @@ export default function OrdersPage() {
             ))}
           </ul>
 
-          <div>
-            <strong>Итого: {getTotal()} ₸</strong>
-          </div>
+          <div><strong>Итого: {getTotal()} ₸</strong></div>
 
           <button onClick={handleSubmit}>Сохранить заказ</button>
         </div>
