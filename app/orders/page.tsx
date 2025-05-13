@@ -58,36 +58,42 @@ export default function OrdersPage() {
 
   // 🔔 Регистрация service worker и получение токена
   useEffect(() => {
-    if (typeof window !== "undefined" && "serviceWorker" in navigator) {
-      navigator.serviceWorker
-        .register("/firebase-messaging-sw.js")
-        .then((registration) => {
-          console.log("✅ Service Worker зарегистрирован");
+    if (typeof window !== "undefined") {
+      import("@/firebase/messaging").then(({ messaging }) => {
+        if ("serviceWorker" in navigator) {
+          navigator.serviceWorker
+            .register("/firebase-messaging-sw.js")
+            .then((registration) => {
+              console.log("SW registered");
   
-          if ("Notification" in window) {
-            Notification.requestPermission().then((permission) => {
-              if (permission === "granted") {
-                getToken(messaging, {
-                  vapidKey: "BDBoBvrgB82hODNhc7N-HltXErs6FPaq3AbMw5xHezEbTmfcuMAdfuzY16OXXqGi8YXUjoaPGugAqM2MYNhzsks",
-                  serviceWorkerRegistration: registration,
-                }).then((token) => {
-                  console.log("🔐 FCM токен:", token);
-                  // можно отправить токен в Firestore
+              if ("Notification" in window) {
+                Notification.requestPermission().then((permission) => {
+                  if (permission === "granted") {
+                    import("firebase/messaging").then(({ getToken, onMessage }) => {
+                      getToken(messaging, {
+                        vapidKey: "ТВОЙ_VAPID",
+                        serviceWorkerRegistration: registration,
+                      }).then((token) => {
+                        console.log("🔐 Token:", token);
+                        // сохранить token в Firestore при желании
+                      });
+  
+                      onMessage(messaging, (payload) => {
+                        const { title, body } = payload.notification ?? {};
+                        if (title) {
+                          new Notification(title, { body: body || "Уведомление" });
+                        }
+                      });
+                    });
+                  }
                 });
               }
             });
-          }
-        });
-  
-      // Активные уведомления (в открытом окне)
-      onMessage(messaging, (payload) => {
-        const { title, body } = payload.notification ?? {};
-        if (title) {
-          new Notification(title, { body: body || "Уведомление" });
         }
       });
     }
   }, []);
+  
   
 
   useEffect(() => {
