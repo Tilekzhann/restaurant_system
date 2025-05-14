@@ -9,6 +9,7 @@ import {
   deleteDoc,
   doc,
   onSnapshot,
+  setDoc,
 } from "firebase/firestore";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { getUserRole } from "@/lib/auth";
@@ -72,8 +73,14 @@ export default function MenuPage() {
       await updateDoc(doc(db, "menu", editingId), data);
       alert("Блюдо обновлено");
     } else {
-      await addDoc(collection(db, "menu"), data);
+      const newMenuRef = doc(collection(db, "menu"));
+      await setDoc(newMenuRef, data);
+      await setDoc(doc(db, "stock", newMenuRef.id), {
+        name,
+        quantity: 0,
+      });
       alert("Блюдо добавлено");
+      
     }
     resetForm();
   };

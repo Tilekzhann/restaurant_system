@@ -2,7 +2,6 @@
 import { getMessaging } from "firebase/messaging";
 import { initializeApp } from "firebase/app";
 
-// 🔐 Замените эти данные на свои из Project Settings → General
 const firebaseConfig = {
     apiKey: "AIzaSyD2O5VGePAY0OueIN5I48x9Cw__B13ibCw",
     authDomain: "restaurant-system-492af.firebaseapp.com",

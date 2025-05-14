@@ -1,5 +1,5 @@
 "use client";
-
+import { getDoc } from "firebase/firestore";
 import { useEffect, useState, useRef } from "react";
 import {
   collection,
@@ -152,7 +152,30 @@ export default function OrdersPage() {
 
   const handleSubmit = async () => {
     if (!selectedTable || !selectedStaff || orderItems.length === 0) return;
-
+  
+    // Проверка остатков по ID, а не по name
+    for (const item of orderItems) {
+      const menuItem = menu.find((m) => m.name === item.name);
+      if (!menuItem) {
+        alert(`Блюдо не найдено в меню: ${item.name}`);
+        return;
+      }
+  
+      const stockRef = doc(db, "stock", menuItem.id);
+      const stockSnap = await getDoc(stockRef);
+      if (!stockSnap.exists()) {
+        alert(`На складе не найдено: ${item.name}`);
+        return;
+      }
+  
+      const stock = stockSnap.data();
+      if (stock.quantity < item.quantity) {
+        alert(`Недостаточно на складе: ${item.name}`);
+        return;
+      }
+    }
+  
+    // Всё в порядке — создаём заказ
     await addDoc(collection(db, "orders"), {
       tableNumber: Number(selectedTable),
       staffId: selectedStaff,
@@ -160,7 +183,16 @@ export default function OrdersPage() {
       status: "new",
       createdAt: Timestamp.now(),
     });
-
+  
+    // Уменьшение остатков
+    for (const item of orderItems) {
+      const menuItem = menu.find((m) => m.name === item.name);
+      const stockRef = doc(db, "stock", menuItem!.id);
+      const stockSnap = await getDoc(stockRef);
+      const current = stockSnap.data()!.quantity;
+      await updateDoc(stockRef, { quantity: current - item.quantity });
+    }
+  
     await fetch("/api/sendPush", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -170,12 +202,13 @@ export default function OrdersPage() {
         role: "kitchen",
       }),
     });
-
+  
     setShowForm(false);
     setSelectedTable("");
     setSelectedStaff("");
     setOrderItems([]);
   };
+    
 
   const handleMarkReady = async (id: string) => {
     await updateDoc(doc(db, "orders", id), { status: "ready" });
