@@ -11,6 +11,7 @@ import {
   orderBy,
   onSnapshot,
   setDoc,
+  runTransaction,
 } from "firebase/firestore";
 import { db } from "@/firebase/config";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
@@ -23,6 +24,7 @@ interface OrderItem {
 
 interface Order {
   id: string;
+  orderNumber: number; // ✅ Добавлено
   tableNumber: number;
   staffId: string;
   items: OrderItem[];
@@ -153,7 +155,6 @@ export default function OrdersPage() {
   const handleSubmit = async () => {
     if (!selectedTable || !selectedStaff || orderItems.length === 0) return;
   
-    // Проверка остатков по ID, а не по name
     for (const item of orderItems) {
       const menuItem = menu.find((m) => m.name === item.name);
       if (!menuItem) {
@@ -175,8 +176,19 @@ export default function OrdersPage() {
       }
     }
   
-    // Всё в порядке — создаём заказ
+    // 🔢 Получаем orderNumber
+    const counterRef = doc(db, "counters", "orders");
+    const orderNumber = await runTransaction(db, async (transaction) => {
+      const counterSnap = await transaction.get(counterRef);
+      const lastNumber = counterSnap.exists() ? counterSnap.data().lastOrderNumber || 0 : 0;
+      const newNumber = lastNumber + 1;
+      transaction.set(counterRef, { lastOrderNumber: newNumber }, { merge: true });
+      return newNumber;
+    });
+  
+    // ✅ Создаём заказ с номером
     await addDoc(collection(db, "orders"), {
+      orderNumber,
       tableNumber: Number(selectedTable),
       staffId: selectedStaff,
       items: orderItems,
@@ -184,7 +196,6 @@ export default function OrdersPage() {
       createdAt: Timestamp.now(),
     });
   
-    // Уменьшение остатков
     for (const item of orderItems) {
       const menuItem = menu.find((m) => m.name === item.name);
       const stockRef = doc(db, "stock", menuItem!.id);
@@ -208,7 +219,7 @@ export default function OrdersPage() {
     setSelectedStaff("");
     setOrderItems([]);
   };
-    
+      
 
   const handleMarkReady = async (id: string) => {
     await updateDoc(doc(db, "orders", id), { status: "ready" });
@@ -222,16 +233,19 @@ export default function OrdersPage() {
     const staffName = staff.find((s) => s.id === order.staffId)?.name || "—";
     const time = order.createdAt.toDate().toLocaleString();
     const total = order.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-
+  
     return (
-      <li
-        key={order.id}
-        className={`order-item ${newOrderIds.current.has(order.id) ? "flash" : ""}`}
-      >
-        <div><strong>Стол #{order.tableNumber}</strong> — {order.items.map(i => `${i.name} x${i.quantity}`).join(", ")}</div>
-        <div>Сотрудник: {staffName}</div>
-        <div>Сумма: {total} ₸</div>
-        <div>Создан: {time}</div>
+      <li key={order.id}   className={`order-item status-${order.status} ${newOrderIds.current.has(order.id) ? "flash" : ""}`}>
+        <div><strong>🧾 Заказ №{order.orderNumber}</strong> | {time}</div>
+        <div>📍 Стол №{order.tableNumber}</div>
+        <div>🍽️ Блюда:</div>
+        <ul>
+          {order.items.map((item, index) => (
+            <li key={index}>• {item.name} ×{item.quantity} — {item.price * item.quantity} ₸</li>
+          ))}
+        </ul>
+        <div>💰 Общая сумма: {total} ₸</div>
+        <div>👤 Сотрудник: {staffName}</div>
         {role === "kitchen" && order.status === "new" && (
           <button onClick={() => handleMarkReady(order.id)}>Готово</button>
         )}
@@ -241,6 +255,7 @@ export default function OrdersPage() {
       </li>
     );
   };
+  
 
   return (
     <div className="orders-wrapper">
