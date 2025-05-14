@@ -237,15 +237,15 @@ export default function OrdersPage() {
     return (
       <li key={order.id}   className={`order-item status-${order.status} ${newOrderIds.current.has(order.id) ? "flash" : ""}`}>
         <div><strong>🧾 Заказ №{order.orderNumber}</strong> | {time}</div>
-        <div>📍 Стол №{order.tableNumber}</div>
-        <div>🍽️ Блюда:</div>
+        <div>📍Стол №{order.tableNumber}</div>
+        <div>Блюда:</div>
         <ul>
           {order.items.map((item, index) => (
-            <li key={index}>• {item.name} ×{item.quantity} — {item.price * item.quantity} ₸</li>
+            <li key={index}>{item.name} ×{item.quantity} — {item.price * item.quantity} ₸</li>
           ))}
         </ul>
-        <div>💰 Общая сумма: {total} ₸</div>
-        <div>👤 Сотрудник: {staffName}</div>
+        <div>Общая сумма: {total} ₸</div>
+        <div>Сотрудник: {staffName}</div>
         {role === "kitchen" && order.status === "new" && (
           <button onClick={() => handleMarkReady(order.id)}>Готово</button>
         )}
