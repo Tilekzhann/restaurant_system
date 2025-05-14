@@ -183,56 +183,53 @@ header.header {
     display: none;
   }
 }
-.orders-wrapper {
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 20px;
-}
-
-.orders-wrapper h1 {
-  margin-bottom: 16px;
-  font-size: 24px;
-}
-
-.orders-wrapper button {
-  margin: 8px 0;
-}
-
-.order-form {
-  margin: 20px 0;
-  padding: 12px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  background-color: #fefefe;
-}
-
-.order-form input,
-.order-form select {
-  display: block;
-  width: 100%;
-  margin-bottom: 10px;
-  padding: 8px;
-  font-size: 14px;
-}
-
-.order-form ul {
-  margin-top: 10px;
-  margin-bottom: 10px;
-}
-
 .order-item {
-  padding: 6px 0;
-  border-bottom: 1px solid #eee;
+  background: #fff;
+  border-radius: 10px;
+  padding: 16px;
+  margin-bottom: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  transition: background-color 0.3s ease;
 }
+
+.order-item ul {
+  margin-top: 8px;
+  padding-left: 20px;
+  list-style-type: disc;
+}
+
+.order-item button {
+  margin-top: 8px;
+  padding: 6px 12px;
+  font-size: 14px;
+  background-color: #007bff;
+  border: none;
+  color: white;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.order-item button:hover {
+  background-color: #0056b3;
+}
+
 .flash {
-  animation: flashBg 0.5s ease-in-out;
+  animation: flashBg 0.6s ease-in-out;
 }
 
 @keyframes flashBg {
-  0% {
-    background-color: #d4edda;
-  }
-  100% {
-    background-color: transparent;
-  }
+  0% { background-color: #fff3cd; }
+  100% { background-color: #fff; }
+}
+.order-item.status-new {
+  border-left: 5px solid #ffc107; /* жёлтый */
+}
+
+.order-item.status-ready {
+  border-left: 5px solid #28a745; /* зелёный */
+}
+
+.order-item.status-paid {
+  border-left: 5px solid #6c757d; /* серый */
+  opacity: 0.8;
 }
