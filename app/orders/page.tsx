@@ -203,6 +203,7 @@ export default function OrdersPage() {
     setSelectedTable("");
     setSelectedStaff("");
     setOrderItems([]);
+    setShowOrders(true);
   };
 
   const handleMarkReady = async (id: string) => {
