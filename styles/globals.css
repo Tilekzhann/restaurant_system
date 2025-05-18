@@ -716,3 +716,37 @@ select:focus {
 .order-remove-btn:hover {
   background-color: #bd2130;
 }
+.order-lists-wrapper {
+  animation-duration: 0.3s;
+  animation-fill-mode: both;
+}
+
+.fade-in {
+  animation-name: fadeInSmooth;
+}
+
+.fade-out {
+  animation-name: fadeOutSmooth;
+}
+
+@keyframes fadeInSmooth {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeOutSmooth {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}

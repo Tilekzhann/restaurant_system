@@ -58,7 +58,8 @@ export default function OrdersPage() {
   const newOrderIds = useRef<Set<string>>(new Set());
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
-  
+  const [showOrders, setShowOrders] = useState(true);
+
   useEffect(() => {
     const auth = getAuth();
     onAuthStateChanged(auth, async (user) => {
@@ -240,9 +241,19 @@ export default function OrdersPage() {
     <div className="orders-wrapper">
       <h1>Заказы</h1>
       {role === "cashier" && (
-        <button onClick={() => setShowForm(!showForm)}>
-          {showForm ? "Скрыть форму" : "+ Добавить заказ"}
-        </button>
+        <button
+        onClick={() => {
+          if (!showForm) {
+            setShowOrders(false);
+            setTimeout(() => setShowForm(true), 300); // сначала скрыть заказы
+          } else {
+            setShowForm(false);
+            setTimeout(() => setShowOrders(true), 300); // потом снова показать заказы
+          }
+        }}
+      >
+        {showForm ? "Скрыть форму" : "+ Добавить заказ"}
+      </button>
       )}
       {showForm && (
         <div className="order-form">
@@ -352,14 +363,24 @@ export default function OrdersPage() {
           <button onClick={handleSubmit}>Сохранить заказ</button>
         </div>
       )}
-      <h2>Готовятся</h2>
-      <ul>{orders.filter(o => o.status === "new").map(renderOrder)}</ul>
-      <h2>Готовы</h2>
-      <ul>{orders.filter(o => o.status === "ready").map(renderOrder)}</ul>
-      <h2 onClick={() => setShowArchive(!showArchive)} style={{ cursor: "pointer", userSelect: "none" }}>
-        {showArchive ? "▼ Архив" : "► Архив"}
-      </h2>
-      {showArchive && <ul>{orders.filter(o => o.status === "paid").map(renderOrder)}</ul>}
-    </div>
+     {showOrders && (
+  <div className={`order-lists-wrapper ${showForm ? "fade-out" : "fade-in"}`}>
+    <h2>Готовятся</h2>
+    <ul>{orders.filter(o => o.status === "new").map(renderOrder)}</ul>
+
+    <h2>Готовы</h2>
+    <ul>{orders.filter(o => o.status === "ready").map(renderOrder)}</ul>
+
+    <h2
+      onClick={() => setShowArchive(!showArchive)}
+      style={{ cursor: "pointer", userSelect: "none" }}
+    >
+      {showArchive ? "▼ Архив" : "► Архив"}
+    </h2>
+
+    {showArchive && <ul>{orders.filter(o => o.status === "paid").map(renderOrder)}</ul>}
+  </div>
+)}
+ </div>
   );
 }
