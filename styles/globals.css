@@ -481,3 +481,12 @@ select:focus {
 .status-paid {
   background-color: #6c757d;
 }
+.report-card ul {
+  margin-top: 0.5rem;
+  padding-left: 1rem;
+  list-style: disc;
+}
+.report-card h3 {
+  font-size: 18px;
+  font-weight: bold;
+}
