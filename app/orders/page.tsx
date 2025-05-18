@@ -56,7 +56,9 @@ export default function OrdersPage() {
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
   const [showArchive, setShowArchive] = useState(false);
   const newOrderIds = useRef<Set<string>>(new Set());
-
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("");
+  
   useEffect(() => {
     const auth = getAuth();
     onAuthStateChanged(auth, async (user) => {
@@ -254,18 +256,57 @@ export default function OrdersPage() {
           <button onClick={() => setMenuPopup(true)}>Открыть меню</button>
 
           {menuPopup && (
-            <div className="menu-modal">
-              <div className="menu-grid">
-                {menu.map((item) => (
-                  <div key={item.id} className="menu-card">
-                    <div className="menu-title">{item.name}</div>
-                    <div className="menu-price">{item.price} ₸</div>
-                    <button onClick={() => handleAddItem(item)}>➕</button>
-                  </div>
-                ))}
-              </div>
+  <div className="menu-modal">
+    <div className="menu-popup-content">
+      <input
+        type="text"
+        className="menu-search"
+        placeholder="🔍 Поиск блюда..."
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+      />
+
+      <div className="menu-categories">
+        <button
+          className={selectedCategory === "" ? "active" : ""}
+          onClick={() => setSelectedCategory("")}
+        >
+          Все
+        </button>
+        {[...new Set(menu.map((item) => item.category))].map((cat) => (
+          <button
+            key={cat}
+            className={selectedCategory === cat ? "active" : ""}
+            onClick={() => setSelectedCategory(cat!)}
+          >
+            {cat}
+          </button>
+        ))}
+      </div>
+
+      <div className="menu-grid">
+        {menu
+          .filter((item) =>
+            item.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
+            (selectedCategory === "" || item.category === selectedCategory)
+          )
+          .map((item) => (
+            <div key={item.id} className="menu-card">
+              <div className="menu-title">{item.name}</div>
+              <div className="menu-price">{item.price} ₸</div>
+              <button onClick={() => {
+                handleAddItem(item);
+                setMenuPopup(false); // Автоматически закрываем
+              }}>➕</button>
             </div>
-          )}
+          ))}
+      </div>
+
+      <button onClick={() => setMenuPopup(false)}>Закрыть</button>
+    </div>
+  </div>
+)}
+
 
           <ul>
             {orderItems.map((item, idx) => (
