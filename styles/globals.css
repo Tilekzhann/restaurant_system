@@ -241,15 +241,20 @@ header.header {
 }
 
 .menu-card {
-  background-color: #1f1f1f;
-  color: #fff;
-  padding: 16px;
+  background-color: #f9f9f9; /* светлый фон */
+  color: #333;
   border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  padding: 16px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1); /* лёгкая тень */
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  min-height: 200px;
+  min-height: 180px;
+  transition: transform 0.2s ease;
+}
+
+.menu-card:hover {
+  transform: translateY(-2px); /* легкое поднятие при наведении */
 }
 
 .menu-title {
@@ -260,21 +265,21 @@ header.header {
 
 .menu-description {
   font-size: 14px;
-  color: #ccc;
+  color: #555;
   margin-bottom: 8px;
 }
 
 .menu-category {
   font-size: 13px;
   font-style: italic;
-  color: #facc15;
+  color: #888;
   margin-bottom: 8px;
 }
 
 .menu-price {
   font-size: 16px;
   font-weight: bold;
-  color: #fbbf24;
+  color: #222;
   text-align: right;
   margin-top: auto;
 }
@@ -287,7 +292,7 @@ header.header {
 }
 
 .edit-btn {
-  background-color: #facc15;
+  background-color: #ffd600;
   border: none;
   padding: 6px 12px;
   color: #000;
@@ -296,7 +301,7 @@ header.header {
 }
 
 .delete-btn {
-  background-color: #ef4444;
+  background-color: #ff5252;
   border: none;
   padding: 6px 12px;
   color: #fff;
