@@ -353,20 +353,31 @@ export default function OrdersPage() {
         </div>
       )}
   <div className="order-lists-wrapper">
+
+<div className="order-section">
   <h2>Готовятся</h2>
   <ul>{orders.filter(o => o.status === "new").map(renderOrder)}</ul>
+</div>
 
+<div className="order-section">
   <h2>Готовы</h2>
   <ul>{orders.filter(o => o.status === "ready").map(renderOrder)}</ul>
+</div>
 
-  <h2 onClick={() => setShowArchive(!showArchive)} style={{ cursor: "pointer", userSelect: "none" }}>
+<div className="order-section">
+  <h2
+    onClick={() => setShowArchive(!showArchive)}
+    style={{ cursor: "pointer", userSelect: "none" }}
+  >
     {showArchive ? "▼ Архив" : "► Архив"}
   </h2>
-
   {showArchive && (
     <ul>{orders.filter(o => o.status === "paid").map(renderOrder)}</ul>
   )}
 </div>
+
+</div>
+
 
  </div>
   );
