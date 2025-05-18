@@ -312,19 +312,38 @@ export default function OrdersPage() {
   {orderItems.map((item, idx) => (
     <li key={idx} className="order-item-row">
       <span className="order-item-name">{item.name}</span>
-      <input
-        type="number"
-        min="1"
-        value={item.quantity}
-        onChange={(e) => {
-          const updatedItems = [...orderItems];
-          updatedItems[idx].quantity = Math.max(1, parseInt(e.target.value) || 1);
-          setOrderItems(updatedItems);
-        }}
-        className="order-qty-input"
-      />
+
+      <div className="qty-controls">
+        <button
+          className="qty-btn"
+          onClick={() => {
+            const updated = [...orderItems];
+            if (updated[idx].quantity > 1) updated[idx].quantity -= 1;
+            setOrderItems(updated);
+          }}
+        >
+          ➖
+        </button>
+
+        <span className="qty-value">{item.quantity}</span>
+
+        <button
+          className="qty-btn"
+          onClick={() => {
+            const updated = [...orderItems];
+            updated[idx].quantity += 1;
+            setOrderItems(updated);
+          }}
+        >
+          ➕
+        </button>
+      </div>
+
       <span className="order-item-price">{item.price * item.quantity} ₸</span>
-      <button onClick={() => handleRemoveItem(idx)} className="order-remove-btn">❌</button>
+
+      <button onClick={() => handleRemoveItem(idx)} className="order-remove-btn">
+        ❌
+      </button>
     </li>
   ))}
 </ul>

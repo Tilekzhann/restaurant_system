@@ -628,55 +628,91 @@ select:focus {
     transform: scale(1);
   }
 }
+/* Список заказанных блюд */
 .order-items-list {
-  margin-top: 1rem;
-  padding-left: 0;
+  margin: 20px 0;
+  padding: 0;
   list-style: none;
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
 
+/* Контейнер строки заказа */
 .order-item-row {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 12px;
-  background-color: #f9f9f9;
-  padding: 10px 14px;
+  justify-content: space-between;
+  padding: 10px 16px;
+  margin-bottom: 10px;
   border-radius: 8px;
+  background-color: #fff;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  gap: 12px;
 }
 
+/* Название блюда */
 .order-item-name {
-  flex: 2;
+  flex: 1 1 200px;
   font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.order-qty-input {
-  width: 60px;
-  padding: 6px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  text-align: center;
-  font-size: 14px;
+/* Контейнер + / - */
+.qty-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
-.order-item-price {
-  flex: 1;
+/* Кнопки + и - */
+.qty-btn {
+  padding: 6px 10px;
+  background-color: #007bff;
+  color: #fff;
+  border: none;
+  font-size: 18px;
   font-weight: bold;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.qty-btn:hover {
+  background-color: #0056b3;
+}
+
+/* Значение количества */
+.qty-value {
+  font-weight: 600;
+  font-size: 16px;
+  min-width: 24px;
+  text-align: center;
+}
+
+/* Цена блюда */
+.order-item-price {
+  flex: 0 0 auto;
+  font-weight: bold;
+  white-space: nowrap;
   text-align: right;
 }
 
+/* Кнопка удаления */
 .order-remove-btn {
-  background-color: #dc3545;
-  color: white;
-  border: none;
-  border-radius: 6px;
   padding: 6px 10px;
-  cursor: pointer;
+  background-color: #dc3545;
+  color: #fff;
+  border: none;
   font-size: 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s;
 }
 
 .order-remove-btn:hover {
-  background-color: #c82333;
+  background-color: #bd2130;
 }
