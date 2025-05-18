@@ -31,6 +31,9 @@ export default function MenuPage() {
   const [category, setCategory] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
 
+  const [selectedCategory, setSelectedCategory] = useState("Все категории");
+  const [categories, setCategories] = useState<string[]>([]);
+
   useEffect(() => {
     const auth = getAuth();
     onAuthStateChanged(auth, async (user) => {
@@ -46,6 +49,9 @@ export default function MenuPage() {
         ...(d.data() as Omit<Dish, "id">),
       }));
       setDishes(items);
+
+      const unique = Array.from(new Set(items.map((d) => d.category)));
+      setCategories(["Все категории", ...unique]);
     });
 
     return () => unsub();
@@ -72,15 +78,12 @@ export default function MenuPage() {
       await updateDoc(doc(db, "menu", editingId), data);
       alert("Блюдо обновлено");
     } else {
-      const newMenuRef = doc(collection(db, "menu"));
-      await setDoc(newMenuRef, data);
-      await setDoc(doc(db, "stock", newMenuRef.id), {
-        name,
-        quantity: 0,
-      });
+      const newRef = doc(collection(db, "menu"));
+      await setDoc(newRef, data);
+      await setDoc(doc(db, "stock", newRef.id), { name, quantity: 0 });
       alert("Блюдо добавлено");
-      
     }
+
     resetForm();
   };
 
@@ -97,6 +100,11 @@ export default function MenuPage() {
       await deleteDoc(doc(db, "menu", id));
     }
   };
+
+  const filteredDishes =
+    selectedCategory === "Все категории"
+      ? dishes
+      : dishes.filter((dish) => dish.category === selectedCategory);
 
   return (
     <div className="p-4">
@@ -151,27 +159,56 @@ export default function MenuPage() {
         </div>
       )}
 
-<h2 className="text-xl font-semibold mb-4">Список блюд</h2>
-{dishes.length === 0 ? (
-  <p>Меню пусто.</p>
-) : (
-  <div className="menu-grid">
-    {dishes.map((dish) => (
-      <div key={dish.id} className="menu-card">
-        <h3 className="menu-title">{dish.name}</h3>
-        <p className="menu-description">{dish.description}</p>
-        <p className="menu-category">Категория: {dish.category}</p>
-        <p className="menu-price">{dish.price} ₸</p>
-        {role === "admin" && (
-          <div className="menu-actions">
-            <button onClick={() => handleEdit(dish)} className="edit-btn">Ред.</button>
-            <button onClick={() => handleDelete(dish.id)} className="delete-btn">Удал.</button>
-          </div>
-        )}
+      <div className="mb-4">
+        <label htmlFor="categoryFilter" className="mr-2 font-semibold">
+          Фильтр по категории:
+        </label>
+        <select
+          id="categoryFilter"
+          value={selectedCategory}
+          onChange={(e) => setSelectedCategory(e.target.value)}
+          className="p-2 border"
+        >
+          {categories.map((cat, i) => (
+            <option key={i} value={cat}>
+              {cat}
+            </option>
+          ))}
+        </select>
       </div>
-    ))}
-  </div> 
-)}
-</div> 
-);
+
+      <h2 className="text-xl font-semibold mb-4">Список блюд</h2>
+
+      {filteredDishes.length === 0 ? (
+        <p>Блюд не найдено.</p>
+      ) : (
+        <div className="menu-grid">
+          {filteredDishes.map((dish) => (
+            <div key={dish.id} className="menu-card">
+              <h3 className="menu-title">{dish.name}</h3>
+              <p className="menu-description">{dish.description}</p>
+              <p className="menu-category">Категория: {dish.category}</p>
+              <p className="menu-price">{dish.price} ₸</p>
+              {role === "admin" && (
+                <div className="menu-actions">
+                  <button
+                    onClick={() => handleEdit(dish)}
+                    className="edit-btn"
+                  >
+                    Ред.
+                  </button>
+                  <button
+                    onClick={() => handleDelete(dish.id)}
+                    className="delete-btn"
+                  >
+                    Удал.
+                  </button>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }

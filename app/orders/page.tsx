@@ -254,6 +254,9 @@ export default function OrdersPage() {
         {role === "cashier" && order.status === "ready" && (
           <button onClick={() => handleMarkPaid(order.id)}>Оплачено</button>
         )}
+        {role === "cashier" && order.status === "ready" && (
+          <button onClick={() => handleMarkPaid(order.id)}>Готово</button>
+        )}
       </li>
     );
   };
