@@ -742,4 +742,6 @@
     border-bottom: 1px solid #e0e0e0;
     padding-bottom: 6px;
   }
-  
+  .orders-wrapper > button {
+    margin-bottom: 16px;
+  }
