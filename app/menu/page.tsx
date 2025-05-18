@@ -151,39 +151,27 @@ export default function MenuPage() {
         </div>
       )}
 
-      <h2 className="text-xl font-semibold mb-4">Список блюд</h2>
-      {dishes.length === 0 ? (
-        <p>Меню пусто.</p>
-      ) : (
-        dishes.map((dish) => (
-          <div key={dish.id} className="border p-4 mb-2 rounded">
-            <div className="flex justify-between items-center">
-              <div>
-                <h3 className="font-bold">{dish.name}</h3>
-                <p>
-                  {dish.category} — {dish.price} KZT
-                </p>
-              </div>
-              {role === "admin" && (
-                <div>
-                  <button
-                    onClick={() => handleEdit(dish)}
-                    className="text-yellow-600 mr-2"
-                  >
-                    Ред.
-                  </button>
-                  <button
-                    onClick={() => handleDelete(dish.id)}
-                    className="text-red-600"
-                  >
-                    Удал.
-                  </button>
-                </div>
-              )}
-            </div>
+<h2 className="text-xl font-semibold mb-4">Список блюд</h2>
+{dishes.length === 0 ? (
+  <p>Меню пусто.</p>
+) : (
+  <div className="menu-grid">
+    {dishes.map((dish) => (
+      <div key={dish.id} className="menu-card">
+        <h3 className="menu-title">{dish.name}</h3>
+        <p className="menu-description">{dish.description}</p>
+        <p className="menu-category">Категория: {dish.category}</p>
+        <p className="menu-price">{dish.price} ₸</p>
+        {role === "admin" && (
+          <div className="menu-actions">
+            <button onClick={() => handleEdit(dish)} className="edit-btn">Ред.</button>
+            <button onClick={() => handleDelete(dish.id)} className="delete-btn">Удал.</button>
           </div>
-        ))
-      )}
-    </div>
-  );
+        )}
+      </div>
+    ))}
+  </div> 
+)}
+</div> 
+);
 }
