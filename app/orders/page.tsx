@@ -16,7 +16,6 @@ import {
 import { db } from "@/firebase/config";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 
-const [showArchive, setShowArchive] = useState(false);
 
 interface OrderItem {
   name: string;
@@ -57,6 +56,7 @@ export default function OrdersPage() {
   const [selectedItem, setSelectedItem] = useState("");
   const [quantity, setQuantity] = useState(1);
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
+  const [showArchive, setShowArchive] = useState(false);
 
   const newOrderIds = useRef<Set<string>>(new Set());
 
