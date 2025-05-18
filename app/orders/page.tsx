@@ -352,7 +352,6 @@ export default function OrdersPage() {
           <button onClick={handleSubmit}>Сохранить заказ</button>
         </div>
       )}
-      (
   <div className="order-lists-wrapper">
   <h2>Готовятся</h2>
   <ul>{orders.filter(o => o.status === "new").map(renderOrder)}</ul>
@@ -368,7 +367,7 @@ export default function OrdersPage() {
     <ul>{orders.filter(o => o.status === "paid").map(renderOrder)}</ul>
   )}
 </div>
-)
+
  </div>
   );
 }
