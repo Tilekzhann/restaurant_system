@@ -203,7 +203,9 @@ export default function OrdersPage() {
     setSelectedTable("");
     setSelectedStaff("");
     setOrderItems([]);
-    setShowOrders(true);
+    setTimeout(() => {
+      setShowOrders(true); 
+    }, 300); 
   };
 
   const handleMarkReady = async (id: string) => {
