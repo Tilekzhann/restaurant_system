@@ -493,14 +493,14 @@ select:focus {
   font-size: 18px;
   font-weight: bold;
 }
-/* Модальное окно */
+/* Модальное затемнение */
 .menu-modal {
   position: fixed;
   top: 0;
   left: 0;
   width: 100vw;
   height: 100vh;
-  background-color: rgba(0, 0, 0, 0.6); /* затемнённый фон */
+  background-color: rgba(0, 0, 0, 0.6);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -510,13 +510,13 @@ select:focus {
   animation: fadeIn 0.3s ease-in-out;
 }
 
-/* Контент внутри модалки */
+/* Контейнер контента */
 .menu-popup-content {
   background: #fff;
   padding: 24px;
   border-radius: 12px;
   width: 100%;
-  max-width: 900px;
+  max-width: 960px;
   max-height: 90vh;
   overflow-y: auto;
   display: flex;
@@ -525,16 +525,9 @@ select:focus {
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
 }
 
-/* Сетка меню */
-.menu-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 20px;
-}
-
-/* Поиск */
+/* Поисковая строка */
 .menu-search {
-  padding: 10px 14px;
+  padding: 12px 16px;
   font-size: 15px;
   border: 1px solid #ccc;
   border-radius: 8px;
@@ -556,25 +549,61 @@ select:focus {
 }
 
 .menu-categories button {
-  padding: 6px 12px;
-  background-color: #eee;
-  border: none;
-  border-radius: 6px;
+  padding: 6px 14px;
   font-size: 14px;
+  border-radius: 6px;
+  border: none;
   cursor: pointer;
-  transition: background 0.3s ease;
+  background-color: #f0f0f0;
+  color: #333;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.menu-categories button:hover {
+  background-color: #e0e0e0;
 }
 
 .menu-categories button.active {
   background-color: #007bff;
-  color: white;
+  color: #fff;
   font-weight: bold;
 }
 
-/* Кнопка закрытия модалки */
+/* Сетка карточек */
+.menu-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 20px;
+}
+
+/* Кнопка + */
+.menu-card button {
+  width: 100%;
+  padding: 10px 0;
+  background-color: #007bff;
+  color: #fff;
+  font-size: 18px;
+  font-weight: bold;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.menu-card button:hover {
+  background-color: #0056b3;
+  transform: translateY(-1px);
+}
+
+.menu-card button:active {
+  transform: scale(0.97);
+  background-color: #004099;
+}
+
+/* Кнопка "Закрыть" */
 .menu-popup-content > button {
   align-self: center;
-  padding: 10px 20px;
+  padding: 12px 24px;
   background-color: #dc3545;
   color: white;
   border: none;
