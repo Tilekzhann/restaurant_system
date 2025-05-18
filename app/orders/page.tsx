@@ -308,14 +308,27 @@ export default function OrdersPage() {
 )}
 
 
-          <ul>
-            {orderItems.map((item, idx) => (
-              <li key={idx} className="flex justify-between items-center">
-                {item.name} x{item.quantity} — {item.price * item.quantity}₸
-                <button onClick={() => handleRemoveItem(idx)}>❌</button>
-              </li>
-            ))}
-          </ul>
+<ul className="order-items-list">
+  {orderItems.map((item, idx) => (
+    <li key={idx} className="order-item-row">
+      <span className="order-item-name">{item.name}</span>
+      <input
+        type="number"
+        min="1"
+        value={item.quantity}
+        onChange={(e) => {
+          const updatedItems = [...orderItems];
+          updatedItems[idx].quantity = Math.max(1, parseInt(e.target.value) || 1);
+          setOrderItems(updatedItems);
+        }}
+        className="order-qty-input"
+      />
+      <span className="order-item-price">{item.price * item.quantity} ₸</span>
+      <button onClick={() => handleRemoveItem(idx)} className="order-remove-btn">❌</button>
+    </li>
+  ))}
+</ul>
+
           <div><strong>Итого: {getTotal()} ₸</strong></div>
           <button onClick={handleSubmit}>Сохранить заказ</button>
         </div>

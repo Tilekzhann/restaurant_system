@@ -628,3 +628,55 @@ select:focus {
     transform: scale(1);
   }
 }
+.order-items-list {
+  margin-top: 1rem;
+  padding-left: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.order-item-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background-color: #f9f9f9;
+  padding: 10px 14px;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+.order-item-name {
+  flex: 2;
+  font-weight: 500;
+}
+
+.order-qty-input {
+  width: 60px;
+  padding: 6px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  text-align: center;
+  font-size: 14px;
+}
+
+.order-item-price {
+  flex: 1;
+  font-weight: bold;
+  text-align: right;
+}
+
+.order-remove-btn {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 10px;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.order-remove-btn:hover {
+  background-color: #c82333;
+}
