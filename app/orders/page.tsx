@@ -16,6 +16,8 @@ import {
 import { db } from "@/firebase/config";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 
+const [showArchive, setShowArchive] = useState(false);
+
 interface OrderItem {
   name: string;
   price: number;
@@ -298,8 +300,15 @@ export default function OrdersPage() {
       <ul>{orders.filter(o => o.status === "new").map(renderOrder)}</ul>
       <h2>Готовы</h2>
       <ul>{orders.filter(o => o.status === "ready").map(renderOrder)}</ul>
-      <h2>Архив</h2>
-      <ul>{orders.filter(o => o.status === "paid").map(renderOrder)}</ul>
+      <h2
+  onClick={() => setShowArchive(!showArchive)}
+  style={{ cursor: "pointer", userSelect: "none" }}
+>
+  {showArchive ? "▼ Архив" : "► Архив"}
+</h2>
+{showArchive && (
+  <ul>{orders.filter(o => o.status === "paid").map(renderOrder)}</ul>
+)}
     </div>
   );
 }
