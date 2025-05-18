@@ -495,79 +495,57 @@ select:focus {
 }
 .menu-modal {
   position: fixed;
-  inset: 0;
-  background-color: rgba(0, 0, 0, 0.5); /* затемнение */
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.6); /* полупрозрачный фон */
   display: flex;
-  flex-direction: column;
   justify-content: center;
   align-items: center;
-  z-index: 9999;
+  z-index: 1000;
   padding: 20px;
+  box-sizing: border-box;
+  animation: fadeIn 0.3s ease-in-out;
 }
 
-.menu-grid {
-  background: white;
-  border-radius: 12px;
+.menu-modal .menu-grid {
+  background-color: #fff;
   max-height: 80vh;
   overflow-y: auto;
-  padding: 20px;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 16px;
+  padding: 24px;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
   width: 100%;
-  max-width: 960px;
+  max-width: 900px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 20px;
 }
 
-.menu-card {
-  background-color: #f9f9f9;
-  border-radius: 10px;
-  padding: 16px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-  text-align: center;
-  transition: transform 0.2s ease;
-}
-
-.menu-card:hover {
-  transform: scale(1.03);
-  background-color: #e6f0ff;
-}
-
-.menu-title {
-  font-weight: bold;
-  margin-bottom: 8px;
+.menu-modal button {
+  display: block;
+  margin: 20px auto 0;
+  padding: 10px 20px;
+  background-color: #dc3545;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
   font-size: 16px;
-}
-
-.menu-price {
-  margin-bottom: 10px;
-  color: #333;
-  font-size: 14px;
-}
-
-.menu-card button {
-  background-color: #007bff;
-  color: white;
-  border: none;
-  padding: 6px 12px;
-  border-radius: 6px;
   cursor: pointer;
 }
 
-.menu-card button:hover {
-  background-color: #0056b3;
+.menu-modal button:hover {
+  background-color: #c82333;
 }
 
-.menu-modal > button {
-  margin-top: 20px;
-  background: #dc3545;
-  padding: 10px 18px;
-  color: white;
-  border-radius: 6px;
-  border: none;
-  font-weight: bold;
-  cursor: pointer;
-}
-
-.menu-modal > button:hover {
-  background-color: #b02a37;
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
