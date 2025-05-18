@@ -1,5 +1,6 @@
 "use client";
-import { useEffect, useState } from "react";
+
+import { useState, useEffect, useCallback } from "react";
 import { db } from "@/firebase/config";
 import {
   collection,
@@ -7,8 +8,9 @@ import {
   query,
   where,
   Timestamp,
+  Query,
+  DocumentData,
 } from "firebase/firestore";
-import { Query, DocumentData } from "firebase/firestore";
 
 interface Order {
   status: "new" | "ready" | "paid";
@@ -27,12 +29,13 @@ export default function AdminMenuPage() {
     paid: 0,
   });
 
-  const toTimestamp = (dateStr: string) => Timestamp.fromDate(new Date(dateStr));
+  const toTimestamp = (dateStr: string) =>
+    Timestamp.fromDate(new Date(dateStr));
 
-  const loadOrderStats = async () => {
+  const loadOrderStats = useCallback(async () => {
     const ordersRef = collection(db, "orders");
     let q: Query<DocumentData> = ordersRef;
-    
+
     if (fromDate && toDate) {
       q = query(
         ordersRef,
@@ -44,7 +47,7 @@ export default function AdminMenuPage() {
     const snap = await getDocs(q);
     const orders = snap.docs.map((doc) => doc.data() as Order);
 
-    let total = orders.length;
+    const total = orders.length;
     let sum = 0;
     const status = { new: 0, ready: 0, paid: 0 };
 
@@ -58,11 +61,11 @@ export default function AdminMenuPage() {
     setTotalOrders(total);
     setTotalSum(sum);
     setStatusCounts(status);
-  };
+  }, [fromDate, toDate]);
 
   useEffect(() => {
     loadOrderStats();
-  }, []);
+  }, [loadOrderStats]);
 
   return (
     <div className="admin-report">
@@ -71,22 +74,40 @@ export default function AdminMenuPage() {
       <div className="date-filters">
         <div>
           <label>От:</label>
-          <input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} />
+          <input
+            type="date"
+            value={fromDate}
+            onChange={(e) => setFromDate(e.target.value)}
+          />
         </div>
         <div>
           <label>До:</label>
-          <input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} />
+          <input
+            type="date"
+            value={toDate}
+            onChange={(e) => setToDate(e.target.value)}
+          />
         </div>
         <button onClick={loadOrderStats}>Обновить</button>
       </div>
 
       <div className="report-card">
-        <p><strong>Всего заказов:</strong> {totalOrders}</p>
-        <p><strong>Общая сумма:</strong> {totalSum} ₸</p>
+        <p>
+          <strong>Всего заказов:</strong> {totalOrders}
+        </p>
+        <p>
+          <strong>Общая сумма:</strong> {totalSum} ₸
+        </p>
         <div className="status-blocks">
-          <div className="status-item status-new">Новые: {statusCounts.new}</div>
-          <div className="status-item status-ready">Готовые: {statusCounts.ready}</div>
-          <div className="status-item status-paid">Оплаченные: {statusCounts.paid}</div>
+          <div className="status-item status-new">
+            Новые: {statusCounts.new}
+          </div>
+          <div className="status-item status-ready">
+            Готовые: {statusCounts.ready}
+          </div>
+          <div className="status-item status-paid">
+            Оплаченные: {statusCounts.paid}
+          </div>
         </div>
       </div>
     </div>
