@@ -231,7 +231,7 @@ export default function OrdersPage() {
         <div>Сотрудник: {staffName}</div>
         {role === "kitchen" && order.status === "new" && <button onClick={() => handleMarkReady(order.id)}>Готово</button>}
         {role === "cashier" && order.status === "ready" && <button onClick={() => handleMarkPaid(order.id)}>Оплачено</button>}
-        {role === "cashier" && order.status === "new" && <button onClick={() => handleMarkPaid(order.id)}>Готово</button>}
+        {role === "cashier" && order.status === "new" && <button onClick={() => handleMarkReady(order.id)}>Готово</button>}
       </li>
     );
   };
