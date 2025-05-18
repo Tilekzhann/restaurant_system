@@ -17,10 +17,11 @@ export default function LoginPage() {
 
       document.cookie = `token=${await userCred.user.getIdToken()}; path=/`;
 
-      if (role === "admin") router.push("/admin");
-      else if (role === "cashier") router.push("/cashier");
-      else if (role === "kitchen") router.push("/kitchen");
-      else alert("Роль не назначена");
+      if (role && ["admin", "cashier", "kitchen"].includes(role)) {
+        router.push("/orders");
+      } else {
+        alert("Роль не назначена");
+      }
     } catch (err) {
       if (err instanceof Error) {
         alert(err.message);
