@@ -59,7 +59,9 @@ export default function OrdersPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
   const [showReceipt, setShowReceipt] = useState(false);
-const [activeOrder, setActiveOrder] = useState<Order | null>(null);
+  const [activeOrder, setActiveOrder] = useState<Order | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
+  const formRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const auth = getAuth();
@@ -153,26 +155,45 @@ const [activeOrder, setActiveOrder] = useState<Order | null>(null);
     orderItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
   const handleSubmit = async () => {
-    if (!selectedTable || !selectedStaff || orderItems.length === 0) return;
+    if (!selectedTable || !selectedStaff || orderItems.length === 0) {
+      setMessage("❗ Заполните все поля и добавьте блюда.");
+      setTimeout(() => setMessage(null), 3000);
+      return;
+    }
   
-    // проверка и уменьшение склада
+    // Проверка склада
     for (const item of orderItems) {
       const menuItem = menu.find((m) => m.name === item.name);
-      if (!menuItem) return alert(`Блюдо не найдено: ${item.name}`);
+      if (!menuItem) {
+        setMessage(`❗ Блюдо не найдено: ${item.name}`);
+        setTimeout(() => setMessage(null), 3000);
+        return;
+      }
+  
       const stockRef = doc(db, "stock", menuItem.id);
       const stockSnap = await getDoc(stockRef);
-      if (!stockSnap.exists()) return alert(`На складе не найдено: ${item.name}`);
+      if (!stockSnap.exists()) {
+        setMessage(`❗ На складе не найдено: ${item.name}`);
+        setTimeout(() => setMessage(null), 3000);
+        return;
+      }
+  
       const stock = stockSnap.data();
-      if (stock.quantity < item.quantity) return alert(`Недостаточно на складе: ${item.name}`);
+      if (stock.quantity < item.quantity) {
+        setMessage(`❗ Недостаточно на складе: ${item.name}`);
+        setTimeout(() => setMessage(null), 3000);
+        return;
+      }
     }
   
     if (activeOrder) {
-      // обновление существующего заказа
+      // Обновление существующего заказа
       await updateDoc(doc(db, "orders", activeOrder.id), {
         items: orderItems,
       });
+      setMessage("✅ Заказ успешно обновлён!");
     } else {
-      // создание нового
+      // Создание нового
       const counterRef = doc(db, "counters", "orders");
       const orderNumber = await runTransaction(db, async (transaction) => {
         const counterSnap = await transaction.get(counterRef);
@@ -190,9 +211,11 @@ const [activeOrder, setActiveOrder] = useState<Order | null>(null);
         status: "new",
         createdAt: Timestamp.now(),
       });
+  
+      setMessage("✅ Заказ успешно создан!");
     }
   
-    // уменьшение склада
+    // Уменьшение количества на складе
     for (const item of orderItems) {
       const menuItem = menu.find((m) => m.name === item.name)!;
       const stockRef = doc(db, "stock", menuItem.id);
@@ -201,13 +224,17 @@ const [activeOrder, setActiveOrder] = useState<Order | null>(null);
       await updateDoc(stockRef, { quantity: current - item.quantity });
     }
   
+    // Сброс формы
     setShowForm(false);
     setSelectedTable("");
     setSelectedStaff("");
     setOrderItems([]);
     setActiveOrder(null);
-  };
   
+    // Очистка сообщения через 3 секунды
+    setTimeout(() => setMessage(null), 3000);
+  };
+    
 
   const handleMarkReady = async (id: string) => {
     await updateDoc(doc(db, "orders", id), { status: "ready" });
@@ -218,10 +245,13 @@ const [activeOrder, setActiveOrder] = useState<Order | null>(null);
   };
   const handleAddToOrder = (order: Order) => {
     setActiveOrder(order);
-    setOrderItems(order.items); // загружаем существующие блюда
+    setOrderItems(order.items); 
     setSelectedTable(order.tableNumber.toString());
     setSelectedStaff(order.staffId);
     setShowForm(true);
+    setTimeout(() => {
+      formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 100); 
   };
   
   const renderOrder = (order: Order) => {
@@ -264,6 +294,11 @@ const [activeOrder, setActiveOrder] = useState<Order | null>(null);
 
   return (
     <div className="orders-wrapper">
+      {message && (
+          <div className="order-message">
+            {message}
+          </div>
+        )}
       <h1>Заказы</h1>
       {role === "cashier" && (
        <button onClick={() => setShowForm((prev) => !prev)}>
@@ -271,7 +306,7 @@ const [activeOrder, setActiveOrder] = useState<Order | null>(null);
      </button>     
       )}
       {showForm && (
-        <div className="order-form">
+          <div className="order-form" ref={formRef}>
           <select value={selectedStaff} onChange={(e) => setSelectedStaff(e.target.value)}>
             <option value="">Выберите сотрудника</option>
             {staff.map((s) => (
@@ -376,6 +411,7 @@ const [activeOrder, setActiveOrder] = useState<Order | null>(null);
           <button onClick={handleSubmit}>Сохранить заказ</button>
         </div>
       )}
+      
   <div className="order-lists-wrapper">
 
 <div className="order-section">
