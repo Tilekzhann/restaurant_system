@@ -401,34 +401,46 @@ export default function OrdersPage() {
   </div>
 )}
 <ul className="order-items-list">
-  {orderItems.map((item, idx) => (
-    <li key={idx} className="order-item-row">
-      <span className="order-item-name">{item.name}</span>
+{orderItems.map((item, idx) => (
+  <li key={idx} className="order-item-row">
+    <span className="order-item-name">{item.name}</span>
 
-      <div className="qty-controls">
-            
-
-        <span className="qty-value">{item.quantity}</span>
-
+    <div className="qty-controls">
+      {activeOrder === null && (
         <button
           className="qty-btn"
           onClick={() => {
             const updated = [...orderItems];
-            updated[idx].quantity += 1;
+            if (updated[idx].quantity > 1) updated[idx].quantity -= 1;
             setOrderItems(updated);
           }}
         >
-          ➕
+          ➖
         </button>
-      </div>
+      )}
 
-      <span className="order-item-price">{item.price * item.quantity} ₸</span>
+      <span className="qty-value">{item.quantity}</span>
 
-      <button onClick={() => handleRemoveItem(idx)} className="order-remove-btn">
-        ❌
+      <button
+        className="qty-btn"
+        onClick={() => {
+          const updated = [...orderItems];
+          updated[idx].quantity += 1;
+          setOrderItems(updated);
+        }}
+      >
+        ➕
       </button>
-    </li>
-  ))}
+    </div>
+
+    <span className="order-item-price">{item.price * item.quantity} ₸</span>
+
+    <button onClick={() => handleRemoveItem(idx)} className="order-remove-btn">
+      ❌
+    </button>
+  </li>
+))}
+
 </ul>
 
           <div><strong>Итого: {getTotal()} ₸</strong></div>
