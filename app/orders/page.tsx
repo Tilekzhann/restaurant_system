@@ -58,7 +58,9 @@ export default function OrdersPage() {
   const newOrderIds = useRef<Set<string>>(new Set());
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
-  
+  const [showReceipt, setShowReceipt] = useState(false);
+const [activeOrder, setActiveOrder] = useState<Order | null>(null);
+
   useEffect(() => {
     const auth = getAuth();
     onAuthStateChanged(auth, async (user) => {
@@ -232,6 +234,9 @@ export default function OrdersPage() {
         {role === "kitchen" && order.status === "new" && <button onClick={() => handleMarkReady(order.id)}>Готово</button>}
         {role === "cashier" && order.status === "ready" && <button onClick={() => handleMarkPaid(order.id)}>Оплачено</button>}
         {role === "cashier" && order.status === "new" && <button onClick={() => handleMarkReady(order.id)}>Готово</button>}
+        <button onClick={() => { setActiveOrder(order); setShowReceipt(true); }}>
+        Показать чек
+        </button>
       </li>
     );
   };
@@ -303,6 +308,29 @@ export default function OrdersPage() {
       </div>
 
       <button onClick={() => setMenuPopup(false)}>Закрыть</button>
+    </div>
+  </div>
+)}
+{showReceipt && activeOrder && (
+  <div className="receipt-modal">
+    <div className="receipt-content">
+      <p><strong>Заказ №{activeOrder.orderNumber}</strong> | {activeOrder.createdAt.toDate().toLocaleString()}</p>
+      <hr />
+      <p>Стол №{activeOrder.tableNumber}</p>
+      <hr />
+      <p>Блюда:</p>
+      <ul>
+        {activeOrder.items.map((item, i) => (
+          <li key={i}>
+            {item.name} ×{item.quantity} — {item.price * item.quantity} ₸
+          </li>
+        ))}
+      </ul>
+      <hr />
+      <p>Общая сумма: {activeOrder.items.reduce((sum, i) => sum + i.price * i.quantity, 0)} ₸</p>
+      <p>Сотрудник: {staff.find(s => s.id === activeOrder.staffId)?.name || "—"}</p>
+      <hr />
+      <button onClick={() => setShowReceipt(false)}>Закрыть</button>
     </div>
   </div>
 )}

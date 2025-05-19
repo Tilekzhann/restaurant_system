@@ -753,4 +753,24 @@
     border-radius: 6px;
     margin-bottom: 8px;
   }
+  .receipt-modal {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+  }
+  
+  .receipt-content {
+    background: white;
+    padding: 24px;
+    border-radius: 10px;
+    max-width: 400px;
+    width: 100%;
+    font-family: monospace;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+  }
   
