@@ -311,31 +311,6 @@ const [activeOrder, setActiveOrder] = useState<Order | null>(null);
     </div>
   </div>
 )}
-{showReceipt && activeOrder && (
-  <div className="receipt-modal">
-    <div className="receipt-content">
-      <p><strong>Заказ №{activeOrder.orderNumber}</strong> | {activeOrder.createdAt.toDate().toLocaleString()}</p>
-      <hr />
-      <p>Стол №{activeOrder.tableNumber}</p>
-      <hr />
-      <p>Блюда:</p>
-      <ul>
-        {activeOrder.items.map((item, i) => (
-          <li key={i}>
-            {item.name} ×{item.quantity} — {item.price * item.quantity} ₸
-          </li>
-        ))}
-      </ul>
-      <hr />
-      <p>Общая сумма: {activeOrder.items.reduce((sum, i) => sum + i.price * i.quantity, 0)} ₸</p>
-      <p>Сотрудник: {staff.find(s => s.id === activeOrder.staffId)?.name || "—"}</p>
-      <hr />
-      <button onClick={() => setShowReceipt(false)}>Закрыть</button>
-    </div>
-  </div>
-)}
-
-
 <ul className="order-items-list">
   {orderItems.map((item, idx) => (
     <li key={idx} className="order-item-row">
@@ -403,9 +378,30 @@ const [activeOrder, setActiveOrder] = useState<Order | null>(null);
     <ul>{orders.filter(o => o.status === "paid").map(renderOrder)}</ul>
   )}
 </div>
-
 </div>
-
+{showReceipt && activeOrder && (
+  <div className="receipt-modal">
+    <div className="receipt-content">
+      <p><strong>Заказ №{activeOrder.orderNumber}</strong> | {activeOrder.createdAt.toDate().toLocaleString()}</p>
+      <hr />
+      <p>Стол №{activeOrder.tableNumber}</p>
+      <hr />
+      <p>Блюда:</p>
+      <ul>
+        {activeOrder.items.map((item, i) => (
+          <li key={i}>
+            {item.name} ×{item.quantity} — {item.price * item.quantity} ₸
+          </li>
+        ))}
+      </ul>
+      <hr />
+      <p>Общая сумма: {activeOrder.items.reduce((sum, i) => sum + i.price * i.quantity, 0)} ₸</p>
+      <p>Сотрудник: {staff.find(s => s.id === activeOrder.staffId)?.name || "—"}</p>
+      <hr />
+      <button onClick={() => setShowReceipt(false)}>Закрыть</button>
+    </div>
+  </div>
+)}
 
  </div>
   );
