@@ -281,9 +281,11 @@ export default function OrdersPage() {
         {role === "cashier" && order.status === "new" && (
           <button onClick={() => handleMarkReady(order.id)}>Готово</button>
         )}
-        <button onClick={() => { setActiveOrder(order); setShowReceipt(true); }}>
-          Показать чек
-        </button>
+        {role !== "kitchen" && (
+          <button onClick={() => { setActiveOrder(order); setShowReceipt(true); }}>
+            Показать чек
+          </button>
+        )}
         {(order.status === "new" || order.status === "ready") && role === "cashier" && (
           <button onClick={() => handleAddToOrder(order)}>Добавить в заказ</button>
         )}
