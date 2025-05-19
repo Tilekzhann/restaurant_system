@@ -91,7 +91,7 @@ export default function StockPage() {
           : i
       )
     );
-    
+  };
 
   const handleDelete = async (id: string) => {
     await deleteDoc(doc(db, "stock", id));
@@ -176,4 +176,3 @@ export default function StockPage() {
     </div>
   );
 }
-};
