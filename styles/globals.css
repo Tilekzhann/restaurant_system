@@ -770,7 +770,7 @@
     left: 0;
     width: 100vw;
     height: 100vh;
-    background-color:rgba(0, 0, 0, 0.85);; /* Мутный чёрный фон */
+    background-color:rgba(0, 0, 0, 1);; /* Мутный чёрный фон */
     display: flex;
     justify-content: center;
     align-items: center;
