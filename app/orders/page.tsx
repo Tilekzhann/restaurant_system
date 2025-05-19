@@ -187,12 +187,43 @@ export default function OrdersPage() {
     }
   
     if (activeOrder) {
-      // Обновление существующего заказа
+      for (const item of orderItems) {
+        const oldItem = activeOrder.items.find(i => i.name === item.name);
+        const delta = oldItem ? item.quantity - oldItem.quantity : item.quantity;
+    
+        if (delta > 0) {
+          const menuItem = menu.find((m) => m.name === item.name);
+          if (!menuItem) {
+            setMessage(`❗ Блюдо не найдено: ${item.name}`);
+            setTimeout(() => setMessage(null), 3000);
+            return;
+          }
+    
+          const stockRef = doc(db, "stock", menuItem.id);
+          const stockSnap = await getDoc(stockRef);
+          if (!stockSnap.exists()) {
+            setMessage(`❗ На складе не найдено: ${item.name}`);
+            setTimeout(() => setMessage(null), 3000);
+            return;
+          }
+    
+          const stock = stockSnap.data();
+          if (stock.quantity < delta) {
+            setMessage(`❗ Недостаточно на складе: ${item.name}`);
+            setTimeout(() => setMessage(null), 3000);
+            return;
+          }
+        }
+      }
+    
+      // 🔽 обязательно сохранить обновлённый заказ
       await updateDoc(doc(db, "orders", activeOrder.id), {
         items: orderItems,
       });
+    
       setMessage("✅ Заказ успешно обновлён!");
-    } else {
+    }
+     else {
       // Создание нового
       const counterRef = doc(db, "counters", "orders");
       const orderNumber = await runTransaction(db, async (transaction) => {
@@ -375,16 +406,7 @@ export default function OrdersPage() {
       <span className="order-item-name">{item.name}</span>
 
       <div className="qty-controls">
-        <button
-          className="qty-btn"
-          onClick={() => {
-            const updated = [...orderItems];
-            if (updated[idx].quantity > 1) updated[idx].quantity -= 1;
-            setOrderItems(updated);
-          }}
-        >
-          ➖
-        </button>
+            
 
         <span className="qty-value">{item.quantity}</span>
 
