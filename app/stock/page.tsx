@@ -17,6 +17,7 @@ interface StockItem {
   id: string;
   name: string;
   quantity: number;
+  editedQuantity?: number;
 }
 
 export default function StockPage() {
@@ -24,7 +25,6 @@ export default function StockPage() {
   const [role, setRole] = useState<"admin" | "cashier" | "kitchen" | null>(null);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-
   const [newName, setNewName] = useState("");
   const [newQty, setNewQty] = useState<number>(0);
 
@@ -67,11 +67,31 @@ export default function StockPage() {
     loadStock();
   };
 
-  const handleUpdate = async (id: string, qty: number) => {
-    const ref = doc(db, "stock", id);
-    await updateDoc(ref, { quantity: qty });
-    loadStock();
+  const handleQuantityChange = (id: string, value: string) => {
+    const qty = parseInt(value, 10) || 0;
+    setItems((prev) =>
+      prev.map((item) =>
+        item.id === id ? { ...item, editedQuantity: qty } : item
+      )
+    );
   };
+
+  const handleSave = async (id: string) => {
+    const item = items.find((i) => i.id === id);
+    if (!item || item.editedQuantity == null) return;
+
+    await updateDoc(doc(db, "stock", id), {
+      quantity: item.editedQuantity,
+    });
+
+    setItems((prev) =>
+      prev.map((i) =>
+        i.id === id
+          ? { ...i, quantity: item.editedQuantity!, editedQuantity: undefined }
+          : i
+      )
+    );
+    
 
   const handleDelete = async (id: string) => {
     await deleteDoc(doc(db, "stock", id));
@@ -113,11 +133,10 @@ export default function StockPage() {
         </div>
       )}
 
-      {/* Поисковое поле */}
       <input
         type="text"
         placeholder="Поиск по названию..."
-        className="p-2 border mb-4 w-full"
+        className="search-input"
         value={search}
         onChange={(e) => setSearch(e.target.value)}
       />
@@ -129,23 +148,26 @@ export default function StockPage() {
           {filteredItems.map((item) => (
             <div key={item.id} className="stock-card">
               <p className="stock-name">{item.name}</p>
-              <p className="stock-qty">Количество: {item.quantity}</p>
-              {role === "admin" && (
-                <div className="stock-actions">
-                  <button onClick={() => handleUpdate(item.id, item.quantity + 1)} className="stock-btn plus">
-                    +1
-                  </button>
-                  <button
-                    onClick={() => handleUpdate(item.id, item.quantity - 1)}
-                    className="stock-btn minus"
-                    disabled={item.quantity <= 0}
-                  >
-                    -1
-                  </button>
-                  <button onClick={() => handleDelete(item.id)} className="stock-btn delete">
-                    Удалить
-                  </button>
-                </div>
+
+              {role === "admin" ? (
+                <>
+                  <input
+                    type="number"
+                    className="stock-qty-input"
+                    value={item.editedQuantity ?? item.quantity}
+                    onChange={(e) => handleQuantityChange(item.id, e.target.value)}
+                  />
+                  <div className="stock-actions">
+                    <button onClick={() => handleSave(item.id)} className="stock-btn plus">
+                      Сохранить
+                    </button>
+                    <button onClick={() => handleDelete(item.id)} className="stock-btn delete">
+                      Удалить
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <p className="stock-qty">Количество: {item.quantity}</p>
               )}
             </div>
           ))}
@@ -154,3 +176,4 @@ export default function StockPage() {
     </div>
   );
 }
+};
