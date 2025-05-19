@@ -231,12 +231,20 @@ const [activeOrder, setActiveOrder] = useState<Order | null>(null);
         </ul>
         <div>Общая сумма: {total} ₸</div>
         <div>Сотрудник: {staffName}</div>
-        {role === "kitchen" && order.status === "new" && <button onClick={() => handleMarkReady(order.id)}>Готово</button>}
-        {role === "cashier" && order.status === "ready" && <button onClick={() => handleMarkPaid(order.id)}>Оплачено</button>}
-        {role === "cashier" && order.status === "new" && <button onClick={() => handleMarkReady(order.id)}>Готово</button>}
+        <div style={{ display: "flex", gap: "8px", marginTop: "8px", flexWrap: "wrap" }}>
+        {role === "kitchen" && order.status === "new" && (
+          <button onClick={() => handleMarkReady(order.id)}>Готово</button>
+        )}
+        {role === "cashier" && order.status === "ready" && (
+          <button onClick={() => handleMarkPaid(order.id)}>Оплачено</button>
+        )}
+        {role === "cashier" && order.status === "new" && (
+          <button onClick={() => handleMarkReady(order.id)}>Готово</button>
+        )}
         <button onClick={() => { setActiveOrder(order); setShowReceipt(true); }}>
-        Показать чек
+          Показать чек
         </button>
+      </div>
       </li>
     );
   };
@@ -380,8 +388,8 @@ const [activeOrder, setActiveOrder] = useState<Order | null>(null);
 </div>
 </div>
 {showReceipt && activeOrder && (
-  <div className="receipt-modal">
-    <div className="receipt-content">
+  <div className="receipt-backdrop" onClick={() => setShowReceipt(false)}>
+    <div className="receipt-content" onClick={(e) => e.stopPropagation()}>
       <p><strong>Заказ №{activeOrder.orderNumber}</strong> | {activeOrder.createdAt.toDate().toLocaleString()}</p>
       <hr />
       <p>Стол №{activeOrder.tableNumber}</p>
