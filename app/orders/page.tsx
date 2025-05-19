@@ -154,6 +154,8 @@ const [activeOrder, setActiveOrder] = useState<Order | null>(null);
 
   const handleSubmit = async () => {
     if (!selectedTable || !selectedStaff || orderItems.length === 0) return;
+  
+    // проверка и уменьшение склада
     for (const item of orderItems) {
       const menuItem = menu.find((m) => m.name === item.name);
       if (!menuItem) return alert(`Блюдо не найдено: ${item.name}`);
@@ -163,25 +165,34 @@ const [activeOrder, setActiveOrder] = useState<Order | null>(null);
       const stock = stockSnap.data();
       if (stock.quantity < item.quantity) return alert(`Недостаточно на складе: ${item.name}`);
     }
-
-    const counterRef = doc(db, "counters", "orders");
-    const orderNumber = await runTransaction(db, async (transaction) => {
-      const counterSnap = await transaction.get(counterRef);
-      const last = counterSnap.exists() ? counterSnap.data().lastOrderNumber || 0 : 0;
-      const next = last + 1;
-      transaction.set(counterRef, { lastOrderNumber: next }, { merge: true });
-      return next;
-    });
-
-    await addDoc(collection(db, "orders"), {
-      orderNumber,
-      tableNumber: Number(selectedTable),
-      staffId: selectedStaff,
-      items: orderItems,
-      status: "new",
-      createdAt: Timestamp.now(),
-    });
-
+  
+    if (activeOrder) {
+      // обновление существующего заказа
+      await updateDoc(doc(db, "orders", activeOrder.id), {
+        items: orderItems,
+      });
+    } else {
+      // создание нового
+      const counterRef = doc(db, "counters", "orders");
+      const orderNumber = await runTransaction(db, async (transaction) => {
+        const counterSnap = await transaction.get(counterRef);
+        const last = counterSnap.exists() ? counterSnap.data().lastOrderNumber || 0 : 0;
+        const next = last + 1;
+        transaction.set(counterRef, { lastOrderNumber: next }, { merge: true });
+        return next;
+      });
+  
+      await addDoc(collection(db, "orders"), {
+        orderNumber,
+        tableNumber: Number(selectedTable),
+        staffId: selectedStaff,
+        items: orderItems,
+        status: "new",
+        createdAt: Timestamp.now(),
+      });
+    }
+  
+    // уменьшение склада
     for (const item of orderItems) {
       const menuItem = menu.find((m) => m.name === item.name)!;
       const stockRef = doc(db, "stock", menuItem.id);
@@ -189,22 +200,14 @@ const [activeOrder, setActiveOrder] = useState<Order | null>(null);
       const current = stockSnap.data()!.quantity;
       await updateDoc(stockRef, { quantity: current - item.quantity });
     }
-
-    await fetch("/api/sendPush", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        title: "Новый заказ",
-        body: `Стол #${selectedTable} — ${orderItems.length} блюд`,
-        role: "kitchen",
-      }),
-    });
-
+  
     setShowForm(false);
     setSelectedTable("");
     setSelectedStaff("");
     setOrderItems([]);
+    setActiveOrder(null);
   };
+  
 
   const handleMarkReady = async (id: string) => {
     await updateDoc(doc(db, "orders", id), { status: "ready" });
@@ -213,7 +216,14 @@ const [activeOrder, setActiveOrder] = useState<Order | null>(null);
   const handleMarkPaid = async (id: string) => {
     await updateDoc(doc(db, "orders", id), { status: "paid" });
   };
-
+  const handleAddToOrder = (order: Order) => {
+    setActiveOrder(order);
+    setOrderItems(order.items); // загружаем существующие блюда
+    setSelectedTable(order.tableNumber.toString());
+    setSelectedStaff(order.staffId);
+    setShowForm(true);
+  };
+  
   const renderOrder = (order: Order) => {
     const staffName = staff.find((s) => s.id === order.staffId)?.name || "—";
     const time = order.createdAt.toDate().toLocaleString();
@@ -244,6 +254,9 @@ const [activeOrder, setActiveOrder] = useState<Order | null>(null);
         <button onClick={() => { setActiveOrder(order); setShowReceipt(true); }}>
           Показать чек
         </button>
+        {(order.status === "new" || order.status === "ready") && role === "cashier" && (
+          <button onClick={() => handleAddToOrder(order)}>Добавить в заказ</button>
+        )}
       </div>
       </li>
     );
