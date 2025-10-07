@@ -1,33 +1,21 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { onAuthStateChanged, User } from "firebase/auth";
+import { auth } from "@/firebase/config";
+import { useRouter } from "next/navigation";
 import { doc, setDoc, Timestamp } from "firebase/firestore";
 import { db } from "@/firebase/config";
+import { getUserRole } from "@/lib/auth";
+import LogsPage from "@/components/LogsPage";
+import AdminGuard from "@/components/AdminGuard";
 
-useEffect(() => {
-  const unsubscribe = onAuthStateChanged(auth, async (user: User | null) => {
-    if (!user) {
-      router.replace("/login");
-      return;
-    }
+export default function AdminLogsPage() {
+  const router = useRouter();
 
-    const role = await getUserRole(user.uid);
-    if (role === "admin") {
-      setIsAdmin(true);
-
-      // Логируем вход админа
-      await setDoc(doc(db, "logs", `${user.uid}-${Date.now()}`), {
-        userId: user.uid,
-        email: user.email,
-        action: "Вход в админ-панель",
-        targetType: "AdminGuard",
-        targetId: null,
-        details: null,
-        timestamp: Timestamp.now(),
-      });
-      
-    } else {
-      router.replace("/"); 
-    }
-    setLoading(false);
-  });
-
-  return () => unsubscribe();
-}, [router]);
+  return (
+    <AdminGuard>
+      <LogsPage />
+    </AdminGuard>
+  );
+}
