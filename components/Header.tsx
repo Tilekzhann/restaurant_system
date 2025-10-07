@@ -48,6 +48,7 @@ export default function Header() {
           <>
             <Link href="/admin">Админ-панель</Link>
             <Link href="/admin/staff">Сотрудники</Link>
+            <Link href="/admin/logs">Журнал действий</Link> {/* Новая ссылка */}
           </>
         )}
         <Link href="/orders">Заказы</Link>
