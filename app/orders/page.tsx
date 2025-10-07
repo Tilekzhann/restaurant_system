@@ -1,5 +1,6 @@
 "use client";
 import { getDoc } from "firebase/firestore";
+import { logAction } from "@/lib/logAction";
 import { useEffect, useState, useRef } from "react";
 import {
   collection,
