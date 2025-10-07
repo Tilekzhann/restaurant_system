@@ -1,42 +1,33 @@
-"use client";
+import { doc, setDoc, Timestamp } from "firebase/firestore";
+import { db } from "@/firebase/config";
 
-import { useEffect, useState, ReactNode } from "react";
-import { auth } from "@/firebase/config";
-import { onAuthStateChanged, User } from "firebase/auth";
-import { useRouter } from "next/navigation";
-import { getUserRole } from "@/lib/auth";
+useEffect(() => {
+  const unsubscribe = onAuthStateChanged(auth, async (user: User | null) => {
+    if (!user) {
+      router.replace("/login");
+      return;
+    }
 
-interface AdminGuardProps {
-  children: ReactNode;
-}
+    const role = await getUserRole(user.uid);
+    if (role === "admin") {
+      setIsAdmin(true);
 
-export default function AdminGuard({ children }: AdminGuardProps) {
-  const [loading, setLoading] = useState(true);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const router = useRouter();
+      // Логируем вход админа
+      await setDoc(doc(db, "logs", `${user.uid}-${Date.now()}`), {
+        userId: user.uid,
+        email: user.email,
+        action: "Вход в админ-панель",
+        targetType: "AdminGuard",
+        targetId: null,
+        details: null,
+        timestamp: Timestamp.now(),
+      });
+      
+    } else {
+      router.replace("/"); 
+    }
+    setLoading(false);
+  });
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user: User | null) => {
-      if (!user) {
-        router.replace("/login");
-        return;
-      }
-
-      const role = await getUserRole(user.uid);
-      if (role === "admin") {
-        setIsAdmin(true);
-      } else {
-        router.replace("/"); // перенаправление на главную, если не админ
-      }
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, [router]);
-
-  if (loading) return <p>Загрузка...</p>;
-  if (!isAdmin) return null;
-
-  return <>{children}</>;
-}
-
+  return () => unsubscribe();
+}, [router]);
