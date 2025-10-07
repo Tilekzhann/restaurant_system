@@ -243,7 +243,8 @@ export default function OrdersPage() {
         status: "new",
         createdAt: Timestamp.now(),
       });
-  
+  await logAction("create_order", "order", orderNumber.toString(), `Создан заказ для стола ${selectedTable}`);
+
       setMessage("✅ Заказ успешно создан!");
     }
   
@@ -269,12 +270,15 @@ export default function OrdersPage() {
     
 
   const handleMarkReady = async (id: string) => {
-    await updateDoc(doc(db, "orders", id), { status: "ready" });
-  };
+  await updateDoc(doc(db, "orders", id), { status: "ready" });
+  await logAction("mark_ready", "order", id, "Заказ отмечен как готовый");
+};
 
-  const handleMarkPaid = async (id: string) => {
-    await updateDoc(doc(db, "orders", id), { status: "paid" });
-  };
+const handleMarkPaid = async (id: string) => {
+  await updateDoc(doc(db, "orders", id), { status: "paid" });
+  await logAction("mark_paid", "order", id, "Заказ оплачен");
+};
+
   const handleAddToOrder = (order: Order) => {
     setActiveOrder(order);
     setOrderItems(order.items); 
