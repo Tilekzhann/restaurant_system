@@ -36,14 +36,16 @@ export default function VerifyPhonePage() {
       const container = document.getElementById("recaptcha-container");
       if (!container) return;
 
-      // @ts-expect-error: Firebase RecaptchaVerifier принимает HTMLElement в браузере
+      // создаём reCAPTCHA один раз
       if (!window.recaptchaVerifier) {
-        window.recaptchaVerifier = new RecaptchaVerifier(container, { size: "invisible" }, auth);
-        await window.recaptchaVerifier.render();
+        const verifier = new RecaptchaVerifier(container, { size: "invisible" }, auth);
+        window.recaptchaVerifier = verifier;
+        await verifier.render();
       }
 
       try {
-        window.confirmationResult = await signInWithPhoneNumber(auth, phone, window.recaptchaVerifier);
+        const confirmation = await signInWithPhoneNumber(auth, phone, window.recaptchaVerifier!);
+        window.confirmationResult = confirmation;
         setReady(true);
       } catch (err: unknown) {
         setMessage((err as Error).message);
