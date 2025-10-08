@@ -33,18 +33,15 @@ export default function VerifyPhonePage() {
         return;
       }
 
-      const container = document.getElementById("recaptcha-container");
-      if (!container) return;
-
-      // создаём reCAPTCHA один раз
+      // создаём reCAPTCHA один раз по id контейнера
       if (!window.recaptchaVerifier) {
-        const verifier = new RecaptchaVerifier(container, { size: "invisible" }, auth);
+        const verifier = new RecaptchaVerifier("recaptcha-container", { size: "invisible" }, auth);
         window.recaptchaVerifier = verifier;
         await verifier.render();
       }
 
       try {
-        const confirmation = await signInWithPhoneNumber(auth, phone, window.recaptchaVerifier!);
+        const confirmation = await signInWithPhoneNumber(auth, phone, window.recaptchaVerifier);
         window.confirmationResult = confirmation;
         setReady(true);
       } catch (err: unknown) {
