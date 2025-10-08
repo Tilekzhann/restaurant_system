@@ -6,6 +6,7 @@ import { RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult } from "fi
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 
+// Расширяем window для хранения reCAPTCHA и ConfirmationResult
 declare global {
   interface Window {
     recaptchaVerifier?: RecaptchaVerifier;
@@ -20,7 +21,7 @@ export default function VerifyPhonePage() {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (typeof window === "undefined") return; // SSR-safe
 
     const initRecaptcha = async () => {
       const user = auth.currentUser;
@@ -28,27 +29,28 @@ export default function VerifyPhonePage() {
 
       const userSnap = await getDoc(doc(db, "users", user.uid));
       const phone = userSnap.data()?.phone;
-      if (!phone) return;
+      if (!phone) {
+        setMessage("Телефон не найден");
+        return;
+      }
 
+      // Получаем контейнер
       const container = document.getElementById("recaptcha-container");
       if (!container) return;
 
+      // Создаём reCAPTCHA один раз
       if (!window.recaptchaVerifier) {
-        window.recaptchaVerifier = new RecaptchaVerifier(
-          container,
-          { size: "invisible" },
-          auth
-        );
+        // @ts-ignore
+        window.recaptchaVerifier = new RecaptchaVerifier(container, { size: "invisible" }, auth);
         await window.recaptchaVerifier.render();
       }
 
-      window.confirmationResult = await signInWithPhoneNumber(
-        auth,
-        phone,
-        window.recaptchaVerifier
-      );
-
-      setReady(true);
+      try {
+        window.confirmationResult = await signInWithPhoneNumber(auth, phone, window.recaptchaVerifier);
+        setReady(true);
+      } catch (err: unknown) {
+        setMessage((err as Error).message);
+      }
     };
 
     initRecaptcha();
@@ -72,9 +74,9 @@ export default function VerifyPhonePage() {
   };
 
   return (
-    <div>
+    <div className="verify-phone-page">
       <h1>Подтверждение телефона</h1>
-      {message && <p>{message}</p>}
+      {message && <p style={{ color: "red" }}>{message}</p>}
       <div id="recaptcha-container"></div>
       <input
         type="text"
