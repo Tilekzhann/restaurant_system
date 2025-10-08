@@ -1,9 +1,17 @@
 "use client";
+
 import { useEffect, useState } from "react";
 import { RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult } from "firebase/auth";
 import { auth, db } from "@/firebase/config";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { useRouter } from "next/navigation";
+
+// Расширяем window для recaptchaVerifier
+declare global {
+  interface Window {
+    recaptchaVerifier?: RecaptchaVerifier;
+  }
+}
 
 export default function VerifyPhonePage() {
   const router = useRouter();
