@@ -1,9 +1,7 @@
-"use client";
-
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult } from "firebase/auth";
 import { auth, db } from "@/firebase/config";
-import { doc, updateDoc, getDoc } from "firebase/firestore";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 
 export default function VerifyPhonePage() {
@@ -12,6 +10,7 @@ export default function VerifyPhonePage() {
   const [message, setMessage] = useState("");
 
   const sendCode = async () => {
+    if (typeof window === "undefined") return; // только клиент
     const user = auth.currentUser;
     if (!user) return;
 
@@ -19,8 +18,21 @@ export default function VerifyPhonePage() {
     const phone = userSnap.data()?.phone;
     if (!phone) return;
 
-    const verifier = new RecaptchaVerifier("recaptcha-container", {}, auth);
-    const confirmation = await signInWithPhoneNumber(auth, phone, verifier);
+    // Создаём RecaptchaVerifier один раз
+    if (!window.recaptchaVerifier) {
+      window.recaptchaVerifier = new RecaptchaVerifier(
+        "recaptcha-container",
+        { size: "invisible" },
+        auth
+      );
+      await window.recaptchaVerifier.render();
+    }
+
+    const confirmation: ConfirmationResult = await signInWithPhoneNumber(
+      auth,
+      phone,
+      window.recaptchaVerifier
+    );
     localStorage.setItem("confirmationResult", JSON.stringify(confirmation));
   };
 
@@ -57,7 +69,7 @@ export default function VerifyPhonePage() {
         type="text"
         placeholder="Введите код из SMS"
         value={code}
-        onChange={e => setCode(e.target.value)}
+        onChange={(e) => setCode(e.target.value)}
       />
       <button onClick={verifyCode}>Подтвердить</button>
     </div>
