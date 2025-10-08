@@ -6,7 +6,6 @@ import { RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult } from "fi
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 
-// Расширяем window для хранения reCAPTCHA и ConfirmationResult
 declare global {
   interface Window {
     recaptchaVerifier?: RecaptchaVerifier;
@@ -21,7 +20,7 @@ export default function VerifyPhonePage() {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    if (typeof window === "undefined") return; // SSR-safe
+    if (typeof window === "undefined") return;
 
     const initRecaptcha = async () => {
       const user = auth.currentUser;
@@ -34,13 +33,11 @@ export default function VerifyPhonePage() {
         return;
       }
 
-      // Получаем контейнер
       const container = document.getElementById("recaptcha-container");
       if (!container) return;
 
-      // Создаём reCAPTCHA один раз
+      // @ts-expect-error: Firebase RecaptchaVerifier принимает HTMLElement в браузере
       if (!window.recaptchaVerifier) {
-        // @ts-ignore
         window.recaptchaVerifier = new RecaptchaVerifier(container, { size: "invisible" }, auth);
         await window.recaptchaVerifier.render();
       }
