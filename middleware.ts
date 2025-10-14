@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { adminAuth } from "@/firebase/admin";
 
+export const runtime = "nodejs"; // 👈 обязательная строка
+
 export async function middleware(request: NextRequest) {
   const token = request.cookies.get("token")?.value;
 
