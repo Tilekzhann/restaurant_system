@@ -15,7 +15,7 @@ export default function Header() {
   const [role, setRole] = useState<Role>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const router = useRouter();
-  const pathname = usePathname();
+  const pathname = usePathname() || ""; // ✅ безопасное значение по умолчанию
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user: User | null) => {
@@ -39,7 +39,7 @@ export default function Header() {
 
   if (!userEmail) return null;
 
-  // 🔹 функция для подсветки активной ссылки
+  // ✅ функция подсветки активной ссылки
   const linkClass = (href: string) =>
     pathname.startsWith(href)
       ? "px-3 py-1 rounded bg-blue-600 text-white font-medium"
@@ -51,6 +51,7 @@ export default function Header() {
         Привет, <span className="text-blue-600">{userEmail}</span>
       </div>
 
+      {/* Кнопка бургер-меню для мобильных */}
       <button
         className="text-2xl md:hidden"
         onClick={() => setMenuOpen(!menuOpen)}
@@ -58,6 +59,7 @@ export default function Header() {
         ☰
       </button>
 
+      {/* Навигация */}
       <nav
         className={`${
           menuOpen
