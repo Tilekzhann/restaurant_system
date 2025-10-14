@@ -1,10 +1,9 @@
-// components/Header.tsx
 "use client";
 
 import { useEffect, useState } from "react";
 import { auth } from "@/firebase/config";
 import { onAuthStateChanged, signOut, User } from "firebase/auth";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { getUserRole } from "@/lib/auth";
 import "../styles/globals.css";
@@ -16,6 +15,7 @@ export default function Header() {
   const [role, setRole] = useState<Role>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user: User | null) => {
@@ -39,22 +39,67 @@ export default function Header() {
 
   if (!userEmail) return null;
 
+  // 🔹 функция для подсветки активной ссылки
+  const linkClass = (href: string) =>
+    pathname.startsWith(href)
+      ? "px-3 py-1 rounded bg-blue-600 text-white font-medium"
+      : "px-3 py-1 rounded text-blue-600 hover:bg-blue-100 transition";
+
   return (
-    <header className="header">
-      <div className="header-left">Привет, {userEmail}</div>
-      <div className="header-toggle" onClick={() => setMenuOpen(!menuOpen)}>☰</div>
-      <nav className={`header-nav ${menuOpen ? "open" : ""}`}>
+    <header className="flex justify-between items-center bg-gray-50 border-b px-6 py-3 shadow-sm">
+      <div className="font-semibold text-gray-700">
+        Привет, <span className="text-blue-600">{userEmail}</span>
+      </div>
+
+      <button
+        className="text-2xl md:hidden"
+        onClick={() => setMenuOpen(!menuOpen)}
+      >
+        ☰
+      </button>
+
+      <nav
+        className={`${
+          menuOpen
+            ? "absolute top-14 left-0 w-full bg-white shadow-md flex flex-col gap-2 p-4"
+            : "hidden md:flex md:gap-3 md:items-center"
+        }`}
+      >
+        {/* 🔹 Админские ссылки */}
         {role === "admin" && (
           <>
-            <Link href="/admin">Админ-панель</Link>
-            <Link href="/admin/staff">Сотрудники</Link>
-            <Link href="/admin/logs">Журнал действий</Link> {/* Новая ссылка */}
+            <Link href="/admin" className={linkClass("/admin")}>
+              Админ-панель
+            </Link>
+            <Link href="/admin/staff" className={linkClass("/admin/staff")}>
+              Сотрудники
+            </Link>
+            <Link href="/admin/users" className={linkClass("/admin/users")}>
+              Пользователи
+            </Link>
+            <Link href="/admin/logs" className={linkClass("/admin/logs")}>
+              Журнал действий
+            </Link>
           </>
         )}
-        <Link href="/orders">Заказы</Link>
-        <Link href="/menu">Меню</Link>
-        <Link href="/stock">Склад</Link>
-        <button onClick={handleLogout}>Выйти</button>
+
+        {/* 🔹 Общие ссылки */}
+        <Link href="/orders" className={linkClass("/orders")}>
+          Заказы
+        </Link>
+        <Link href="/menu" className={linkClass("/menu")}>
+          Меню
+        </Link>
+        <Link href="/stock" className={linkClass("/stock")}>
+          Склад
+        </Link>
+
+        <button
+          onClick={handleLogout}
+          className="px-3 py-1 rounded bg-red-500 text-white hover:bg-red-600 transition"
+        >
+          Выйти
+        </button>
       </nav>
     </header>
   );
