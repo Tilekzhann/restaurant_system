@@ -1,10 +1,13 @@
-// /verifyphone/page.tsx
 "use client";
 
 import { useEffect, useState } from "react";
 import { auth, db } from "@/firebase/config";
-import { RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult } from "firebase/auth";
-import { doc, getDoc, updateDoc } from "firebase/firestore";
+import {
+  RecaptchaVerifier,
+  linkWithPhoneNumber,
+  ConfirmationResult,
+} from "firebase/auth";
+import { doc, getDoc, updateDoc, setDoc } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 
 declare global {
@@ -25,26 +28,36 @@ export default function VerifyPhonePage() {
 
     const initRecaptcha = async () => {
       const user = auth.currentUser;
-      if (!user) return;
-
-      const userSnap = await getDoc(doc(db, "users", user.uid));
-      const phone = userSnap.data()?.phone;
-      if (!phone) {
-        setMessage("Телефон не найден");
+      if (!user) {
+        setMessage("Пользователь не найден. Перезайдите в систему.");
         return;
       }
 
-      // создаём reCAPTCHA один раз по id контейнера
+      const userRef = doc(db, "users", user.uid);
+      const userSnap = await getDoc(userRef);
+      const phone = userSnap.data()?.phone;
+
+      if (!phone) {
+        setMessage("Телефон не найден в профиле.");
+        return;
+      }
+
+      // создаём reCAPTCHA (один раз)
       if (!window.recaptchaVerifier) {
-       const verifier = new RecaptchaVerifier(auth, "recaptcha-container", {
-        size: "invisible",
+        const verifier = new RecaptchaVerifier(auth, "recaptcha-container", {
+          size: "invisible",
         });
         window.recaptchaVerifier = verifier;
         await verifier.render();
       }
 
       try {
-        const confirmation = await signInWithPhoneNumber(auth, phone, window.recaptchaVerifier);
+        // 🔹 привязываем телефон к текущему пользователю, а не создаём нового
+        const confirmation = await linkWithPhoneNumber(
+          user,
+          phone,
+          window.recaptchaVerifier
+        );
         window.confirmationResult = confirmation;
         setReady(true);
       } catch (err: unknown) {
@@ -63,7 +76,14 @@ export default function VerifyPhonePage() {
 
       const user = auth.currentUser;
       if (user) {
-        await updateDoc(doc(db, "users", user.uid), { verified: true });
+        const userRef = doc(db, "users", user.uid);
+        const userSnap = await getDoc(userRef);
+
+        if (userSnap.exists()) {
+          await updateDoc(userRef, { verified: true });
+        } else {
+          await setDoc(userRef, { verified: true }, { merge: true });
+        }
       }
 
       router.push("/pending");
