@@ -1,14 +1,22 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { adminAuth } from "@/firebase/admin";
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const token = request.cookies.get("token")?.value;
 
-  if (!token && request.nextUrl.pathname !== "/login") {
+  if (!token) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  return NextResponse.next();
+  try {
+    // Проверяем подлинность токена
+    await adminAuth.verifyIdToken(token);
+    return NextResponse.next();
+  } catch (error) {
+    console.error("Invalid token:", error);
+    return NextResponse.redirect(new URL("/login", request.url));
+  }
 }
 
 export const config = {
