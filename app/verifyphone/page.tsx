@@ -1,3 +1,4 @@
+// /verifyphone/page.tsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -35,7 +36,9 @@ export default function VerifyPhonePage() {
 
       // создаём reCAPTCHA один раз по id контейнера
       if (!window.recaptchaVerifier) {
-        const verifier = new RecaptchaVerifier("recaptcha-container", { size: "invisible" }, auth);
+       const verifier = new RecaptchaVerifier(auth, "recaptcha-container", {
+        size: "invisible",
+        });
         window.recaptchaVerifier = verifier;
         await verifier.render();
       }
