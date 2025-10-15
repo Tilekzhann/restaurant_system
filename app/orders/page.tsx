@@ -72,37 +72,41 @@ export default function OrdersPage() {
         const r = await getUserRole(user.uid);
         setRole(r as "admin" | "cashier" | "kitchen");
 
-        if (typeof window !== "undefined") {
-          import("@/firebase/messaging").then(async ({ messaging }) => {
-            if ("serviceWorker" in navigator) {
-              const registration = await navigator.serviceWorker.register("/firebase-messaging-sw.js");
-              if ("Notification" in window) {
-                const permission = await Notification.requestPermission();
-                if (permission === "granted") {
-                  const { getToken, onMessage } = await import("firebase/messaging");
-                  const token = await getToken(messaging, {
-                    vapidKey: "BDBoBvrgB82hODNhc7N-HltXErs6FPaq3AbMw5xHezEbTmfcuMAdfuzY16OXXqGi8YXUjoaPGugAqM2MYNhzsks",
-                    serviceWorkerRegistration: registration,
-                  });
-                  if (token) {
-                    await setDoc(doc(db, "fcm_tokens", user.uid), {
-                      token,
-                      role: r,
-                      timestamp: Timestamp.now(),
-                    });
-                  }
-                  onMessage(messaging, (payload) => {
-                    const { title, body } = payload.notification ?? {};
-                    if (title) new Notification(title, { body: body || "" });
-                  });
-                }
-              }
-            }
+if (typeof window !== "undefined") {
+  import("@/firebase/messaging").then(async ({ getClientMessaging }) => {
+    const messaging = await getClientMessaging();
+    if (!messaging) return; // SSR защита — если выполняется на сервере, просто выходим
+
+    if ("serviceWorker" in navigator) {
+      const registration = await navigator.serviceWorker.register("/firebase-messaging-sw.js");
+
+      if ("Notification" in window) {
+        const permission = await Notification.requestPermission();
+        if (permission === "granted") {
+          const { getToken, onMessage } = await import("firebase/messaging");
+          const token = await getToken(messaging, {
+            vapidKey: "BDBoBvrgB82hODNhc7N-HltXErs6FPaq3AbMw5xHezEbTmfcuMAdfuzY16OXXqGi8YXUjoaPGugAqM2MYNhzsks",
+            serviceWorkerRegistration: registration,
+          });
+
+          if (token) {
+            await setDoc(doc(db, "fcm_tokens", user.uid), {
+              token,
+              role: r,
+              timestamp: Timestamp.now(),
+            });
+          }
+
+          onMessage(messaging, (payload) => {
+            const { title, body } = payload.notification ?? {};
+            if (title) new Notification(title, { body: body || "" });
           });
         }
       }
-    });
-  }, []);
+    }
+  });
+}
+
 
   useEffect(() => {
     const unsubOrders = onSnapshot(
