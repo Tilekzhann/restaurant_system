@@ -277,3 +277,19 @@ tr:hover td {
     transform: translateY(0);
   }
 }
+
+.sidebar-link {
+  display: block;
+  padding: 8px 12px;
+  border-radius: 6px;
+  color: #333;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.sidebar-link:hover {
+  background-color: #f3f4f6;
+  color: #007bff;
+}
+
