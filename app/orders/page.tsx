@@ -10,7 +10,6 @@ import {
   query,
   orderBy,
   onSnapshot,
-  getDoc,
   runTransaction,
 } from "firebase/firestore";
 import { db } from "@/firebase/config";
