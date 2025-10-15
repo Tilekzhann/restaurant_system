@@ -1,4 +1,5 @@
 "use client";
+
 import { useEffect, useState, useRef } from "react";
 import {
   collection,
@@ -10,11 +11,10 @@ import {
   orderBy,
   onSnapshot,
   getDoc,
-  setDoc,
   runTransaction,
 } from "firebase/firestore";
-import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { db } from "@/firebase/config";
+import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { logAction } from "@/lib/logAction";
 
 interface OrderItem {
@@ -58,38 +58,44 @@ export default function OrdersPage() {
   const [showArchive, setShowArchive] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
-  const [message, setMessage] = useState<string | null>(null);
-  const [activeOrder, setActiveOrder] = useState<Order | null>(null);
   const [showReceipt, setShowReceipt] = useState(false);
+  const [activeOrder, setActiveOrder] = useState<Order | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
   const formRef = useRef<HTMLDivElement | null>(null);
-  const newOrderIds = useRef<Set<string>>(new Set());
 
-  // === AUTH + ROLE ===
+  // 🔹 Определяем роль пользователя
   useEffect(() => {
     const auth = getAuth();
     onAuthStateChanged(auth, async (user) => {
-      if (!user) return;
-      const { getUserRole } = await import("@/lib/auth");
-      const r = await getUserRole(user.uid);
-      setRole(r as "admin" | "cashier" | "kitchen");
+      if (user) {
+        const { getUserRole } = await import("@/lib/auth");
+        const r = await getUserRole(user.uid);
+        setRole(r as "admin" | "cashier" | "kitchen");
+      }
     });
   }, []);
 
-  // === FIRESTORE SUBSCRIPTIONS ===
+  // 🔹 Получаем данные
   useEffect(() => {
     const unsubOrders = onSnapshot(
       query(collection(db, "orders"), orderBy("createdAt", "desc")),
       (snapshot) => {
-        const list = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as Order[];
+        const list: Order[] = snapshot.docs.map((d) => ({
+          id: d.id,
+          ...(d.data() as Omit<Order, "id">),
+        }));
         setOrders(list);
       }
     );
+
     const unsubMenu = onSnapshot(collection(db, "menu"), (snap) => {
-      setMenu(snap.docs.map((d) => ({ id: d.id, ...d.data() } as MenuItem)));
+      setMenu(snap.docs.map((d) => ({ id: d.id, ...(d.data() as MenuItem) })));
     });
+
     const unsubStaff = onSnapshot(collection(db, "staff"), (snap) => {
-      setStaff(snap.docs.map((d) => ({ id: d.id, ...d.data() } as StaffMember)));
+      setStaff(snap.docs.map((d) => ({ id: d.id, ...(d.data() as StaffMember) })));
     });
+
     return () => {
       unsubOrders();
       unsubMenu();
@@ -97,66 +103,83 @@ export default function OrdersPage() {
     };
   }, []);
 
-  // === HANDLERS ===
-  const getTotal = () => orderItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
-
+  // 🔹 Добавить блюдо
   const handleAddItem = (item: MenuItem) => {
-    const existing = orderItems.find((i) => i.name === item.name);
-    if (existing) {
-      setOrderItems(orderItems.map((i) =>
-        i.name === item.name ? { ...i, quantity: i.quantity + 1 } : i
-      ));
-    } else {
-      setOrderItems([...orderItems, { name: item.name, price: item.price, quantity: 1 }]);
-    }
-    setMenuPopup(false);
+    setOrderItems((prev) => {
+      const existing = prev.find((i) => i.name === item.name);
+      if (existing) {
+        return prev.map((i) =>
+          i.name === item.name ? { ...i, quantity: i.quantity + 1 } : i
+        );
+      }
+      return [...prev, { name: item.name, price: item.price, quantity: 1 }];
+    });
   };
 
   const handleRemoveItem = (index: number) => {
-    setOrderItems(orderItems.filter((_, i) => i !== index));
+    setOrderItems((prev) => prev.filter((_, i) => i !== index));
   };
 
+  const getTotal = () =>
+    orderItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
+  // 🔹 Создание / обновление заказа
   const handleSubmit = async () => {
     if (!selectedTable || !selectedStaff || orderItems.length === 0) {
       setMessage("❗ Заполните все поля и добавьте блюда.");
       return;
     }
 
-    const counterRef = doc(db, "counters", "orders");
-    const orderNumber = await runTransaction(db, async (tx) => {
-      const snap = await tx.get(counterRef);
-      const last = snap.exists() ? snap.data().lastOrderNumber || 0 : 0;
-      const next = last + 1;
-      tx.set(counterRef, { lastOrderNumber: next }, { merge: true });
-      return next;
-    });
+    if (activeOrder) {
+      await updateDoc(doc(db, "orders", activeOrder.id), { items: orderItems });
+      setMessage("✅ Заказ обновлён!");
+    } else {
+      const counterRef = doc(db, "counters", "orders");
+      const orderNumber = await runTransaction(db, async (transaction) => {
+        const counterSnap = await transaction.get(counterRef);
+        const last = counterSnap.exists()
+          ? counterSnap.data().lastOrderNumber || 0
+          : 0;
+        const next = last + 1;
+        transaction.set(counterRef, { lastOrderNumber: next }, { merge: true });
+        return next;
+      });
 
-    await addDoc(collection(db, "orders"), {
-      orderNumber,
-      tableNumber: Number(selectedTable),
-      staffId: selectedStaff,
-      items: orderItems,
-      status: "new",
-      createdAt: Timestamp.now(),
-    });
-    await logAction("create_order", "order", orderNumber.toString(), `Создан заказ для стола ${selectedTable}`);
+      await addDoc(collection(db, "orders"), {
+        orderNumber,
+        tableNumber: Number(selectedTable),
+        staffId: selectedStaff,
+        items: orderItems,
+        status: "new",
+        createdAt: Timestamp.now(),
+      });
 
-    setMessage("✅ Заказ успешно создан!");
+      await logAction(
+        "create_order",
+        "order",
+        orderNumber.toString(),
+        `Создан заказ для стола ${selectedTable}`
+      );
+
+      setMessage("✅ Заказ успешно создан!");
+    }
+
     setShowForm(false);
-    setSelectedStaff("");
     setSelectedTable("");
+    setSelectedStaff("");
     setOrderItems([]);
+    setActiveOrder(null);
+
     setTimeout(() => setMessage(null), 3000);
   };
 
+  // 🔹 Изменение статусов
   const handleMarkReady = async (id: string) => {
     await updateDoc(doc(db, "orders", id), { status: "ready" });
-    await logAction("mark_ready", "order", id, "Заказ готов");
   };
 
   const handleMarkPaid = async (id: string) => {
     await updateDoc(doc(db, "orders", id), { status: "paid" });
-    await logAction("mark_paid", "order", id, "Заказ оплачен");
   };
 
   const handleAddToOrder = (order: Order) => {
@@ -168,24 +191,30 @@ export default function OrdersPage() {
     setTimeout(() => formRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
   };
 
-  // === RENDER ORDER ===
+  // 🔹 Рендер заказа
   const renderOrder = (order: Order) => {
     const staffName = staff.find((s) => s.id === order.staffId)?.name || "—";
-    const time = order.createdAt.toDate().toLocaleString();
-    const total = order.items.reduce((sum, i) => sum + i.price * i.quantity, 0);
+    const total = order.items.reduce(
+      (sum, item) => sum + item.price * item.quantity,
+      0
+    );
 
     return (
       <li key={order.id} className={`order-item status-${order.status}`}>
-        <div><strong>🧾 Заказ №{order.orderNumber}</strong> | {time}</div>
+        <div><strong>🧾 Заказ №{order.orderNumber}</strong></div>
         <div>📍 Стол №{order.tableNumber}</div>
-        <div>Сотрудник: {staffName}</div>
+        <div>Блюда:</div>
         <ul>
-          {order.items.map((i, idx) => (
-            <li key={idx}>{i.name} ×{i.quantity} — {i.price * i.quantity} ₸</li>
+          {order.items.map((item, i) => (
+            <li key={i}>
+              {item.name} ×{item.quantity} — {item.price * item.quantity} ₸
+            </li>
           ))}
         </ul>
-        <div><strong>Итого: {total} ₸</strong></div>
-        <div className="order-actions">
+        <div>Общая сумма: {total} ₸</div>
+        <div>Сотрудник: {staffName}</div>
+
+        <div style={{ display: "flex", gap: "8px", marginTop: "8px" }}>
           {role === "kitchen" && order.status === "new" && (
             <button onClick={() => handleMarkReady(order.id)}>Готово</button>
           )}
@@ -196,43 +225,57 @@ export default function OrdersPage() {
             <button
               onClick={() => {
                 setActiveOrder(order);
-                setTimeout(() => setShowReceipt(true), 0); // 🔧 фикс для показа чека
+                setShowReceipt(true);
               }}
             >
               Показать чек
             </button>
           )}
-          {(order.status === "new" || order.status === "ready") && role === "cashier" && (
-            <button onClick={() => handleAddToOrder(order)}>Добавить в заказ</button>
-          )}
+          {(order.status === "new" || order.status === "ready") &&
+            role === "cashier" && (
+              <button onClick={() => handleAddToOrder(order)}>
+                Добавить в заказ
+              </button>
+            )}
         </div>
       </li>
     );
   };
 
+  // 🔹 Отображение
   return (
     <div className="orders-wrapper">
       {message && <div className="order-message">{message}</div>}
+
       <h1>Заказы</h1>
 
       {role === "cashier" && (
-        <button onClick={() => setShowForm(!showForm)}>
+        <button onClick={() => setShowForm((prev) => !prev)}>
           {showForm ? "Скрыть форму" : "+ Добавить заказ"}
         </button>
       )}
 
       {showForm && (
-        <div className="order-form card" ref={formRef}>
-          <select value={selectedStaff} onChange={(e) => setSelectedStaff(e.target.value)}>
+        <div className="order-form" ref={formRef}>
+          <select
+            value={selectedStaff}
+            onChange={(e) => setSelectedStaff(e.target.value)}
+          >
             <option value="">Выберите сотрудника</option>
-            {staff.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+            {staff.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.name}
+              </option>
+            ))}
           </select>
+
           <input
             type="number"
             placeholder="Номер стола"
             value={selectedTable}
             onChange={(e) => setSelectedTable(e.target.value)}
           />
+
           <button onClick={() => setMenuPopup(true)}>Открыть меню</button>
 
           {menuPopup && (
@@ -245,19 +288,31 @@ export default function OrdersPage() {
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
+
                 <div className="menu-categories">
-                  <button className={!selectedCategory ? "active" : ""} onClick={() => setSelectedCategory("")}>Все</button>
+                  <button
+                    className={selectedCategory === "" ? "active" : ""}
+                    onClick={() => setSelectedCategory("")}
+                  >
+                    Все
+                  </button>
                   {[...new Set(menu.map((i) => i.category))].map((cat) => (
-                    <button key={cat} className={selectedCategory === cat ? "active" : ""} onClick={() => setSelectedCategory(cat!)}>
+                    <button
+                      key={cat}
+                      className={selectedCategory === cat ? "active" : ""}
+                      onClick={() => setSelectedCategory(cat!)}
+                    >
                       {cat}
                     </button>
                   ))}
                 </div>
+
                 <div className="menu-grid">
                   {menu
-                    .filter((i) =>
-                      i.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
-                      (!selectedCategory || i.category === selectedCategory)
+                    .filter(
+                      (i) =>
+                        i.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
+                        (selectedCategory === "" || i.category === selectedCategory)
                     )
                     .map((item) => (
                       <div key={item.id} className="menu-card">
@@ -267,6 +322,7 @@ export default function OrdersPage() {
                       </div>
                     ))}
                 </div>
+
                 <button onClick={() => setMenuPopup(false)}>Закрыть</button>
               </div>
             </div>
@@ -275,56 +331,110 @@ export default function OrdersPage() {
           <ul className="order-items-list">
             {orderItems.map((item, idx) => (
               <li key={idx} className="order-item-row">
-                <span>{item.name}</span>
+                <span className="order-item-name">{item.name}</span>
                 <div className="qty-controls">
-                  <button onClick={() => {
-                    const updated = [...orderItems];
-                    if (updated[idx].quantity > 1) updated[idx].quantity--;
-                    setOrderItems(updated);
-                  }}>➖</button>
-                  <span>{item.quantity}</span>
-                  <button onClick={() => {
-                    const updated = [...orderItems];
-                    updated[idx].quantity++;
-                    setOrderItems(updated);
-                  }}>➕</button>
+                  <button
+                    className="qty-btn"
+                    onClick={() => {
+                      const updated = [...orderItems];
+                      if (updated[idx].quantity > 1) updated[idx].quantity -= 1;
+                      setOrderItems(updated);
+                    }}
+                  >
+                    ➖
+                  </button>
+                  <span className="qty-value">{item.quantity}</span>
+                  <button
+                    className="qty-btn"
+                    onClick={() => {
+                      const updated = [...orderItems];
+                      updated[idx].quantity += 1;
+                      setOrderItems(updated);
+                    }}
+                  >
+                    ➕
+                  </button>
                 </div>
-                <span>{item.price * item.quantity} ₸</span>
-                <button onClick={() => handleRemoveItem(idx)}>❌</button>
+                <span className="order-item-price">
+                  {item.price * item.quantity} ₸
+                </span>
+                <button
+                  onClick={() => handleRemoveItem(idx)}
+                  className="order-remove-btn"
+                >
+                  ❌
+                </button>
               </li>
             ))}
           </ul>
 
-          <strong>Итого: {getTotal()} ₸</strong>
+          <div>
+            <strong>Итого: {getTotal()} ₸</strong>
+          </div>
           <button onClick={handleSubmit}>Сохранить заказ</button>
         </div>
       )}
 
-      {/* ====== Списки ====== */}
-      <div className="order-section"><h2>Готовятся</h2><ul>{orders.filter(o => o.status === "new").map(renderOrder)}</ul></div>
-      <div className="order-section"><h2>Готовы</h2><ul>{orders.filter(o => o.status === "ready").map(renderOrder)}</ul></div>
-      <div className="order-section">
-        <h2 onClick={() => setShowArchive(!showArchive)} style={{ cursor: "pointer" }}>
-          {showArchive ? "▼ Архив" : "► Архив"}
-        </h2>
-        {showArchive && <ul>{orders.filter(o => o.status === "paid").map(renderOrder)}</ul>}
+      <div className="order-lists-wrapper">
+        <div className="order-section">
+          <h2>Готовятся</h2>
+          <ul>{orders.filter((o) => o.status === "new").map(renderOrder)}</ul>
+        </div>
+
+        <div className="order-section">
+          <h2>Готовы</h2>
+          <ul>{orders.filter((o) => o.status === "ready").map(renderOrder)}</ul>
+        </div>
+
+        <div className="order-section">
+          <h2
+            onClick={() => setShowArchive(!showArchive)}
+            style={{ cursor: "pointer" }}
+          >
+            {showArchive ? "▼ Архив" : "► Архив"}
+          </h2>
+          {showArchive && (
+            <ul>{orders.filter((o) => o.status === "paid").map(renderOrder)}</ul>
+          )}
+        </div>
       </div>
 
-      {/* ====== Чек ====== */}
+      {/* Модальное окно чека */}
       {showReceipt && activeOrder && (
-        <div className="receipt-backdrop" onClick={() => setShowReceipt(false)}>
-          <div className="receipt-content" onClick={(e) => e.stopPropagation()}>
-            <p><strong>Заказ №{activeOrder.orderNumber}</strong> | {activeOrder.createdAt.toDate().toLocaleString()}</p>
+        <div className="receipt-modal" onClick={() => setShowReceipt(false)}>
+          <div
+            className="receipt-content"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <p>
+              <strong>Заказ №{activeOrder.orderNumber}</strong> |{" "}
+              {activeOrder.createdAt.toDate().toLocaleString()}
+            </p>
+            <hr />
             <p>Стол №{activeOrder.tableNumber}</p>
             <hr />
+            <p>Блюда:</p>
             <ul>
               {activeOrder.items.map((i, idx) => (
-                <li key={idx}>{i.name} ×{i.quantity} — {i.price * i.quantity} ₸</li>
+                <li key={idx}>
+                  {i.name} ×{i.quantity} — {i.price * i.quantity} ₸
+                </li>
               ))}
             </ul>
             <hr />
-            <p><strong>Итого: {activeOrder.items.reduce((s, i) => s + i.price * i.quantity, 0)} ₸</strong></p>
-            <p>Сотрудник: {staff.find((s) => s.id === activeOrder.staffId)?.name || "—"}</p>
+            <p>
+              Общая сумма:{" "}
+              {activeOrder.items.reduce(
+                (sum, i) => sum + i.price * i.quantity,
+                0
+              )}{" "}
+              ₸
+            </p>
+            <p>
+              Сотрудник:{" "}
+              {staff.find((s) => s.id === activeOrder.staffId)?.name || "—"}
+            </p>
+            <hr />
             <button onClick={() => setShowReceipt(false)}>Закрыть</button>
           </div>
         </div>
