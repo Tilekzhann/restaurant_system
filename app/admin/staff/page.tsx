@@ -40,27 +40,27 @@ export default function StaffPage() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className="max-w-3xl mx-auto p-6">
       <div className="bg-white rounded-xl shadow-md p-6 mb-6">
-        <h1 className="text-2xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
+        <h1 className="text-2xl font-semibold text-gray-800 mb-6 flex items-center gap-2">
           👥 Сотрудники
         </h1>
 
         {staff.length === 0 ? (
-          <p className="text-gray-500 text-sm italic mb-4">
+          <p className="text-gray-500 italic mb-4">
             Пока нет добавленных сотрудников.
           </p>
         ) : (
-          <ul className="divide-y divide-gray-100 mb-6 animate-fadeIn">
+          <ul className="space-y-3 mb-6">
             {staff.map((s) => (
               <li
                 key={s.id}
-                className="flex justify-between items-center py-3 hover:bg-gray-50 px-2 rounded-md transition"
+                className="flex justify-between items-center bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-md px-4 py-3 transition"
               >
-                <span className="font-medium text-gray-700">{s.name}</span>
+                <span className="font-medium text-gray-800">{s.name}</span>
                 <button
                   onClick={() => handleDelete(s.id)}
-                  className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-md text-sm transition"
+                  className="bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded-md text-sm transition"
                 >
                   Удалить
                 </button>
@@ -72,7 +72,7 @@ export default function StaffPage() {
         {!showForm ? (
           <button
             onClick={() => setShowForm(true)}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition"
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium transition"
           >
             + Добавить сотрудника
           </button>
