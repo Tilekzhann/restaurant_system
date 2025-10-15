@@ -2,110 +2,98 @@
 
 import { useEffect, useState } from "react";
 import { auth, db } from "@/firebase/config";
-import {
-  RecaptchaVerifier,
-  linkWithPhoneNumber,
-  ConfirmationResult,
-} from "firebase/auth";
-import { doc, getDoc, updateDoc, setDoc } from "firebase/firestore";
+import { onAuthStateChanged, signOut, User } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { getUserRole } from "@/lib/auth";
 
-declare global {
-  interface Window {
-    recaptchaVerifier?: RecaptchaVerifier;
-    confirmationResult?: ConfirmationResult;
-  }
-}
+type Role = "admin" | "cashier" | "kitchen" | null;
 
-export default function VerifyPhonePage() {
+export default function Header() {
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [role, setRole] = useState<Role>(null);
+  const [verified, setVerified] = useState<boolean>(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const router = useRouter();
-  const [code, setCode] = useState("");
-  const [message, setMessage] = useState("");
-  const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    const unsubscribe = onAuthStateChanged(auth, async (user: User | null) => {
+      if (user) {
+        setUserEmail(user.email);
 
-    const initRecaptcha = async () => {
-      const user = auth.currentUser;
-      if (!user) {
-        setMessage("Пользователь не найден. Перезайдите в систему.");
-        return;
+        // Получаем роль
+        const r = await getUserRole(user.uid);
+        setRole(r as Role);
+
+        // Проверяем статус верификации
+        const userDoc = await getDoc(doc(db, "users", user.uid));
+        const data = userDoc.data();
+        setVerified(data?.verified ?? false);
+      } else {
+        setUserEmail(null);
+        setRole(null);
+        setVerified(false);
       }
+    });
 
-      const userRef = doc(db, "users", user.uid);
-      const userSnap = await getDoc(userRef);
-      const phone = userSnap.data()?.phone;
-
-      if (!phone) {
-        setMessage("Телефон не найден в профиле.");
-        return;
-      }
-
-      // создаём reCAPTCHA (один раз)
-      if (!window.recaptchaVerifier) {
-        const verifier = new RecaptchaVerifier(auth, "recaptcha-container", {
-          size: "invisible",
-        });
-        window.recaptchaVerifier = verifier;
-        await verifier.render();
-      }
-
-      try {
-        // 🔹 привязываем телефон к текущему пользователю, а не создаём нового
-        const confirmation = await linkWithPhoneNumber(
-          user,
-          phone,
-          window.recaptchaVerifier
-        );
-        window.confirmationResult = confirmation;
-        setReady(true);
-      } catch (err: unknown) {
-        setMessage((err as Error).message);
-      }
-    };
-
-    initRecaptcha();
+    return () => unsubscribe();
   }, []);
 
-  const verifyCode = async () => {
-    if (!window.confirmationResult) return;
-
-    try {
-      await window.confirmationResult.confirm(code);
-
-      const user = auth.currentUser;
-      if (user) {
-        const userRef = doc(db, "users", user.uid);
-        const userSnap = await getDoc(userRef);
-
-        if (userSnap.exists()) {
-          await updateDoc(userRef, { verified: true });
-        } else {
-          await setDoc(userRef, { verified: true }, { merge: true });
-        }
-      }
-
-      router.push("/pending");
-    } catch (err: unknown) {
-      setMessage((err as Error).message);
-    }
+  const handleLogout = async () => {
+    await signOut(auth);
+    document.cookie = "token=; path=/; max-age=0";
+    router.replace("/login");
   };
 
+  if (!userEmail) return null;
+
   return (
-    <div className="verify-phone-page">
-      <h1>Подтверждение телефона</h1>
-      {message && <p style={{ color: "red" }}>{message}</p>}
-      <div id="recaptcha-container"></div>
-      <input
-        type="text"
-        placeholder="Введите код из SMS"
-        value={code}
-        onChange={(e) => setCode(e.target.value)}
-      />
-      <button onClick={verifyCode} disabled={!ready}>
-        Подтвердить
-      </button>
-    </div>
+    <>
+      <header className="header">
+        <div className="header-left">
+          Привет, {userEmail}
+        </div>
+
+        <div className="header-toggle" onClick={() => setMenuOpen(!menuOpen)}>
+          ☰
+        </div>
+
+        {verified ? (
+          <nav className={`header-nav ${menuOpen ? "open" : ""}`}>
+            {role === "admin" && (
+              <>
+                <Link href="/admin">Админ-панель</Link>
+                <Link href="/admin/staff">Сотрудники</Link>
+                <Link href="/admin/users">Пользователи</Link>
+                <Link href="/admin/logs">Журнал действий</Link>
+              </>
+            )}
+
+            <Link href="/orders">Заказы</Link>
+            <Link href="/menu">Меню</Link>
+            <Link href="/stock">Склад</Link>
+            <button onClick={handleLogout}>Выйти</button>
+          </nav>
+        ) : (
+          // ⚠️ Показываем баннер вместо меню
+          <div
+            style={{
+              backgroundColor: "#fff3cd",
+              color: "#664d03",
+              padding: "10px 16px",
+              borderRadius: "8px",
+              border: "1px solid #ffeeba",
+              marginLeft: "auto",
+              fontWeight: 500,
+              maxWidth: "500px",
+              textAlign: "center",
+            }}
+          >
+            ⚠️ Подтвердите номер телефона, чтобы получить доступ к системе.
+          </div>
+        )}
+      </header>
+    </>
   );
 }
