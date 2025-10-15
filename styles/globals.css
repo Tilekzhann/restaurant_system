@@ -293,3 +293,16 @@ tr:hover td {
   color: #007bff;
 }
 
+.nav-link {
+  color: #374151;
+  font-weight: 500;
+  text-decoration: none;
+  transition: color 0.2s ease, background 0.2s ease;
+  padding: 6px 10px;
+  border-radius: 6px;
+}
+
+.nav-link:hover {
+  color: #007bff;
+  background-color: #f3f4f6;
+}
