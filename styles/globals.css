@@ -1,0 +1,279 @@
+/* =============================
+   GLOBAL RESET & BASE
+============================= */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: "Inter", "Segoe UI", Roboto, sans-serif;
+  background-color: #f5f7fa;
+  color: #1f2937;
+  line-height: 1.5;
+  padding: 1rem;
+}
+
+h1, h2, h3 {
+  margin-bottom: 1rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+/* =============================
+   BUTTONS
+============================= */
+button {
+  background-color: #2563eb;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s, transform 0.1s ease;
+}
+
+button:hover {
+  background-color: #1e40af;
+}
+
+button:active {
+  transform: scale(0.97);
+}
+
+/* =============================
+   INPUTS
+============================= */
+input, textarea, select {
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 15px;
+  width: 100%;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  background-color: #fff;
+}
+
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+}
+
+/* =============================
+   HEADER (NAVBAR)
+============================= */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 10px 20px;
+  margin-bottom: 1.2rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.header-left {
+  font-weight: 600;
+  color: #111827;
+}
+
+.header-toggle {
+  display: none;
+  font-size: 24px;
+  cursor: pointer;
+}
+
+.header-nav {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.header-nav a,
+.header-nav button {
+  padding: 6px 14px;
+  border-radius: 6px;
+  background-color: transparent;
+  border: 1px solid transparent;
+  color: #374151;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.header-nav a:hover {
+  color: #2563eb;
+  background-color: #e0e7ff;
+}
+
+.header-nav button {
+  background-color: #ef4444;
+  color: white;
+}
+
+.header-nav button:hover {
+  background-color: #dc2626;
+}
+
+/* Banner for unverified users */
+.verify-banner {
+  background-color: #fff7ed;
+  border: 1px solid #fed7aa;
+  color: #92400e;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-weight: 500;
+  text-align: center;
+  animation: fadeIn 0.3s ease-in-out;
+  margin-left: auto;
+}
+
+/* =============================
+   MOBILE HEADER
+============================= */
+@media (max-width: 768px) {
+  .header-toggle {
+    display: block;
+  }
+
+  .header-nav {
+    display: none;
+    flex-direction: column;
+    gap: 0;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    background: white;
+    border-top: 1px solid #e5e7eb;
+    border-radius: 0 0 12px 12px;
+  }
+
+  .header-nav.open {
+    display: flex;
+  }
+
+  .header-nav a,
+  .header-nav button {
+    width: 100%;
+    text-align: left;
+    border-bottom: 1px solid #f3f4f6;
+    padding: 14px 20px;
+  }
+}
+
+/* =============================
+   CARDS / PANELS
+============================= */
+.card {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+}
+
+/* =============================
+   TABLES
+============================= */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+
+th, td {
+  padding: 12px 14px;
+  text-align: left;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+th {
+  background-color: #f9fafb;
+  color: #374151;
+  font-weight: 600;
+}
+
+tr:hover td {
+  background-color: #f9fafb;
+}
+
+/* =============================
+   STATUS LABELS
+============================= */
+.status-item {
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-weight: 600;
+  display: inline-block;
+  color: white;
+}
+
+.status-new {
+  background-color: #fbbf24;
+  color: #1f2937;
+}
+
+.status-ready {
+  background-color: #22c55e;
+}
+
+.status-paid {
+  background-color: #6b7280;
+}
+
+/* =============================
+   MODALS
+============================= */
+.menu-modal {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease-in-out;
+}
+
+.menu-popup-content {
+  background: #fff;
+  padding: 24px;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 600px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.1);
+}
+
+/* =============================
+   ANIMATIONS
+============================= */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
